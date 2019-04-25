@@ -40,8 +40,6 @@ Elegoo_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 // Elegoo_TFTLCD tft;
 
 
-
-
 /*Shared varibles*/
 //Measurements
 unsigned int temperatureRaw=75, systolicPressRaw=80;
@@ -55,9 +53,6 @@ unsigned short batteryState=200;
 unsigned char bpOutOfRange=0,tempOutOfRange=0, pulseOutOfRange=0;
 //Warning
 bool bpHigh=false, tempHigh=false, pulseLow=false;
-
-
-
 
 
 /*Define tasks*/
@@ -159,28 +154,25 @@ void Display_function(void *data){
    tft.println("Blood Pressure: ");
    tft.print(" Systolic Pressure: ");
    if (pulseLow==true){
-    tft.setTextColor(RED);
-    tft.print(mySingle.y);
-    tft.println(" mmHg");}
+      tft.setTextColor(RED);
+      tft.print(mySingle.y);
+      tft.println(" mmHg");}
    else{
-    tft.setTextColor(GREEN);
-    tft.print(mySingle.y);
-    tft.println(" mmHg");};
+      tft.setTextColor(GREEN);
+      tft.print(mySingle.y);
+      tft.println(" mmHg");};
     
    tft.setTextColor(WHITE,BLACK);
    tft.print(" Diastolic Pressure:");
    if (pulseLow==true){
-    tft.setTextColor(RED);
-    tft.print(mySingle.y);
-    tft.println(" mmHg");}
+      tft.setTextColor(RED);
+      tft.print(mySingle.y);
+      tft.println(" mmHg");}
    else{
-    tft.setTextColor(GREEN);
-    tft.print(mySingle.y);
-    tft.println(" mmHg");};
+      tft.setTextColor(GREEN);
+      tft.print(mySingle.y);
+      tft.println(" mmHg");};
    
-   
-
-
    tft.setTextColor(WHITE,BLACK);
    tft.print("Temperature:        ");
    if (tempHigh==true){tft.setTextColor(RED);}
@@ -204,9 +196,8 @@ void Display_function(void *data){
    tft.print(mySingle.y);
    tft.println(" % ");
 
-
-  tft.println();
-  tft.println();
+   tft.println();
+   tft.println();
 }
 
 void WarningAlarm_function(void *data){
@@ -235,7 +226,6 @@ void WarningAlarm_function(void *data){
     }else{
       pulseLow=false;
     }
-
   }
 }
 
@@ -260,12 +250,9 @@ if ( Serial.available()) {
       value[i] = toInt(str);
       i++;
     }
-    for(int j=0; j<4; j++) Serial.print(value[j]);
+    for(int j=0; j<1; j++) Serial.print(value[j]);
   }
-
   *(data->batteryStatePtr)=value[0];
-
-
 }
 
 void Schedule_function(void *data){
@@ -331,20 +318,16 @@ void setup() {
   //Initialized serial port 0 & 1
   Serial.begin(9600);
   Serial1.begin(9600);
+  //Initialized for TFT
 
-   Serial.println(F("TFT LCD test"));
-
-//For TFT 
-#ifdef USE_Elegoo_SHIELD_PINOUT
+  Serial.println(F("TFT LCD test"));
+  #ifdef USE_Elegoo_SHIELD_PINOUT
   Serial.println(F("Using Elegoo 2.4\" TFT Arduino Shield Pinout"));
-#else
+  #else
   Serial.println(F("Using Elegoo 2.4\" TFT Breakout Board Pinout"));
-#endif
-
+  #endif
   Serial.print("TFT size is "); Serial.print(tft.width()); Serial.print("x"); Serial.println(tft.height());
-
   tft.reset();
-
    uint16_t identifier = tft.readID();
    if(identifier == 0x9325) {
     Serial.println(F("Found ILI9325 LCD driver"));
@@ -381,11 +364,7 @@ void setup() {
   
   }
   tft.begin(identifier);
-
-
-
   tft.fillScreen(BLACK);
-
 }
 
 void loop() {
