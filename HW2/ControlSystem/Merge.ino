@@ -101,26 +101,28 @@ typedef struct DataStructStatus{
 DataStructStatus StatusData;
 
 /*Tasks's function*/
-void Measure_function(void *data){
-  
-  data = (DataStructMeasure*)data;
-  String  rawData;
+void Measure_function(void *uncast_data){
+  DataStructMeasure* data;
+  data = (DataStructMeasure*)uncast_data;
+  String  serialResponse;
   Serial.write('1');
+  int value[4];
   
 if ( Serial.available()) {
     serialResponse = Serial.readStringUntil('\n');
 
     // Convert from String Object to String.
-    char buf[sizeof(sz)];
+    char buf[sizeof(serialResponse)];
     serialResponse.toCharArray(buf, sizeof(buf));
     char *p = buf;
     char *str;
-    int value[4];
     int i = 0;
+    String cast_str;
     while ((str = strtok_r(p, " ", &p)) != NULL) // delimiter is the semicolon
     {  
-      Serial.println(toInt(str));
-      value[i] = toInt(str);
+      cast_str=(String)str;
+      Serial.println(cast_str.toInt());
+      value[i] = cast_str.toInt();
       i++;
     }
     for(int j=0; j<4; j++) Serial.print(value[j]);
@@ -128,80 +130,86 @@ if ( Serial.available()) {
 
 
 
-    *(data->temperatureRawPtr)value[0];
-    *(data->systolicRawPtr)=value[1];
-    *(data->diastolicRawPtr)=value[2];
-    *(data->bpRawPtr)=value[3];
+    *(data->temperatureRawPtr)=value[0];
+    *(data->systolicPressRawPtr)=value[1];
+    *(data->diastolicPressRawPtr)=value[2];
+    *(data->pulseRateRawPtr)=value[3];
 
 
 
 }
 
-void Compute_function(void *data){
-  data = (DataStructCompute *)data; 
-  *(data->tempCorretedPtr) = 5+0.75*(*(data->tempRawPtr));
-  *(data->systolicRawPtr) = 9+2*(*(data->systolicRawPtr));
-  *(data->diasCorretedPtr) = 6+1.5*(*(data->diastolicRawPtr)); 
-  *(data->prCorrectedPtr) = 8+3*(*(data->bpRawPtr));
+void Compute_function(void *uncast_data){
+  DataStructCompute* data;
+  data = (DataStructCompute *)uncast_data; 
+  *(data->tempCorrectedPtr) = String(5+0.75*(*(data->temperatureRawPtr))).c_str();
+  *(data->systolicPressCorrectedPtr) = String(9+2*(*(data->systolicPressRawPtr))).c_str();
+  *(data->diastolicPressCorrectedPtr) = String(6+1.5*(*(data->diastolicPressRawPtr))).c_str(); 
+  *(data->pulseRateCorrectedPtr) = String(8+3*(*(data->pulseRateRawPtr))).c_str();
+ 
 
 }
+ 
 
-
-void Display_function(void *data){
-  tft.setCursor(0, 30);
+void Display_function(void *uncast_data){
+  DataStructDisplay* data;
+  data=(DataStructDisplay*)uncast_data;
+   tft.setRotation(1);
+   tft.setCursor(0, 30);
    tft.setTextSize(2);
    tft.setTextColor(WHITE,BLACK);
    tft.println("Blood Pressure: ");
    tft.print(" Systolic Pressure: ");
    if (pulseLow==true){
-      tft.setTextColor(RED);
-      tft.print(mySingle.y);
+      tft.setTextColor(RED,BLACK);
+      tft.print(String((char*)*(data->systolicPressCorrectedPtr)));
       tft.println(" mmHg");}
    else{
-      tft.setTextColor(GREEN);
-      tft.print(mySingle.y);
+      tft.setTextColor(GREEN,BLACK);
+      tft.print(String((char*)*(data->systolicPressCorrectedPtr)));
       tft.println(" mmHg");};
     
    tft.setTextColor(WHITE,BLACK);
    tft.print(" Diastolic Pressure:");
    if (pulseLow==true){
-      tft.setTextColor(RED);
-      tft.print(mySingle.y);
+      tft.setTextColor(RED,BLACK);
+      tft.print(String((char*)*(data->diastolicPressCorrectedPtr)));
       tft.println(" mmHg");}
    else{
-      tft.setTextColor(GREEN);
-      tft.print(mySingle.y);
+      tft.setTextColor(GREEN,BLACK);
+      tft.print(String((char*)*(data->diastolicPressCorrectedPtr)));
       tft.println(" mmHg");};
    
    tft.setTextColor(WHITE,BLACK);
    tft.print("Temperature:        ");
-   if (tempHigh==true){tft.setTextColor(RED);}
-   else{tft.setTextColor(GREEN);};
-   tft.print(mySingle.y);
-   tft.println(" degree C");
+   if (tempHigh==true){tft.setTextColor(RED,BLACK);}
+   else{tft.setTextColor(GREEN,BLACK);};
+   tft.print(String((char*)*(data->tempCorrectedPtr)));
+   tft.println("deg C");
 
   
    tft.setTextColor(WHITE,BLACK);
    tft.print("Pulse Rate:         ");
-   if (pulseLow==true){tft.setTextColor(RED);}
-   else{tft.setTextColor(GREEN);};
-   tft.print(mySingle.y);
+   if (pulseLow==true){tft.setTextColor(RED,BLACK);}
+   else{tft.setTextColor(GREEN,BLACK);};
+   tft.print(String((char*)*(data->pulseRateCorrectedPtr)));
    tft.println(" BPM ");
 
    
    tft.setTextColor(WHITE,BLACK);
    tft.print("Battery status:     ");
-   if (batteryState<20){tft.setTextColor(RED);}
-   else{tft.setTextColor(GREEN);};
-   tft.print(mySingle.y);
+   if (batteryState<20){tft.setTextColor(RED,BLACK);}
+   else{tft.setTextColor(GREEN,BLACK);};
+   tft.print(*(data->batteryStatePtr));
    tft.println(" % ");
 
    tft.println();
    tft.println();
 }
 
-void WarningAlarm_function(void *data){
-  data = ( DataStructWarningAlarm *)data;
+void WarningAlarm_function(void *uncast_data){
+  DataStructWarningAlarm * data;
+  data = ( DataStructWarningAlarm *)uncast_data;
   if(*(data->temperatureRawPtr)<36.1 || *(data->temperatureRawPtr)>37.8){
     tempOutOfRange=*(data->temperatureRawPtr);
     if (*(data->temperatureRawPtr)>37.8){
@@ -219,9 +227,9 @@ void WarningAlarm_function(void *data){
     }
   }
   
-  if (*(data->pulseStatePtr)<60 || *(data->pulseStatePtr)>100){
-    pulseOutOfRange = *(data->pulseStatePtr);
-    if(*(data->pulseStatePtr)<60){
+  if (*(data->pulseRateRawPtr)<60 || *(data->pulseRateRawPtr)>100){
+    pulseOutOfRange = *(data->pulseRateRawPtr);
+    if(*(data->pulseRateRawPtr)<60){
       pulseLow=true;
     }else{
       pulseLow=false;
@@ -229,30 +237,34 @@ void WarningAlarm_function(void *data){
   }
 }
 
-void Status_function(void *data){
-  String  rawData;
-  data=(DataStructStatus *)data;
+void Status_function(void *uncast_data){
+  String  serialResponse;
+  DataStructStatus* data;
+  int value;
+  data=(DataStructStatus *)uncast_data;
   Serial.write('1');
   
 if ( Serial.available()) {
     serialResponse = Serial.readStringUntil('\n');
 
     // Convert from String Object to String.
-    char buf[sizeof(sz)];
+    char buf[sizeof(serialResponse)];
     serialResponse.toCharArray(buf, sizeof(buf));
     char *p = buf;
     char *str;
-    int value[1];
+    
     int i = 0;
+    String cast_str;
     while ((str = strtok_r(p, " ", &p)) != NULL) // delimiter is the semicolon
     {  
-      Serial.println(toInt(str));
-      value[i] = toInt(str);
+      cast_str=(String)str;
+      Serial.println(cast_str.toInt());
+      value = cast_str.toInt();
       i++;
     }
-    for(int j=0; j<1; j++) Serial.print(value[j]);
+    for(int j=0; j<1; j++) Serial.print(value);
   }
-  *(data->batteryStatePtr)=value[0];
+  *(data->batteryStatePtr)=value;
 }
 
 void Schedule_function(void *data){
