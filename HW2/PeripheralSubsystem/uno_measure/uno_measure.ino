@@ -2,6 +2,8 @@ unsigned int temperatureRaw = 75;
 unsigned int systolicPressRaw = 80;
 unsigned int diastolicPressRaw = 80;
 unsigned int pulseRateRaw = 50;
+unsigned short batteryStatus = 200;
+
 int temperatureRaw_count = 1; // 1 means even time, -1 means odd time;
 int systolicPressRaw_count = 1;
 int diastolicPressRaw_count = 1;
@@ -10,6 +12,7 @@ bool temperatureRaw_flip = true;
 bool systolicPressRaw_flip = true; // if set to false, it means complete
 bool diastolicPressRaw_flip = true; // if set to false, it means complete
 bool pulseRateRaw_flip = true;
+
 String whichTask;
 String measureData = "";
 
@@ -19,9 +22,14 @@ void setup(){
 
 void loop(){
   if ( Serial.available() > 0 ) {
-    whichTask = Serial.readStringUntil('\0');  
-    measureData = String(get_temperatureRaw()) + " " + String(get_systolicPressRaw()) + " " +
-            String(get_diastolicPressRaw()) + " " + String(get_pulseRateRaw());
+    whichTask = Serial.readStringUntil('\0');
+    if( whichTask == "1" ){  
+        measureData = String(get_temperatureRaw()) + " " + String(get_systolicPressRaw()) + " " +
+                      String(get_diastolicPressRaw()) + " " + String(get_pulseRateRaw());
+    }
+    else if( whichTask == "2" ){
+        measureData = String(get_batteryStatus());
+    }
     Serial.println(measureData);
   }
 }
@@ -97,4 +105,9 @@ unsigned int get_pulseRateRaw(){
 
   pulseRateRaw_count *= -1 ;
   return pulseRateRaw;
+}
+
+unsigned short get_batteryStatus(){
+  if( batteryStatus > 0 ) batteryStatus -= 1;
+  return batteryStatus;
 }
