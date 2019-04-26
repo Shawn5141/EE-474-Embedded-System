@@ -62,7 +62,7 @@ typedef struct TCB{
   void* taskDataPtr;
 }TCB;
 TCB Measure, Compute, Display;
-TCB WarningAlarm, Status, Schedule;
+TCB WarningAlarm, Status;
 TCB* taskque[numTask];
 
 /*Define data structures*/
@@ -113,7 +113,6 @@ void Measure_function(void *uncast_data){
   int value[4];
   
   while ( !Serial1.available()){}
-  //Serial.println("Measure");
   serialResponse = Serial1.readStringUntil('\n');
 
   // Convert from String Object to String.
@@ -126,10 +125,7 @@ void Measure_function(void *uncast_data){
   while ((str = strtok_r(p, " ", &p)) != NULL) // delimiter is the semicolon
   {  
     cast_str=(String)str;
-    //Serial.print("uncast_M ");
-    //Serial.println(cast_str.toInt());
     value[i] = cast_str.toInt();
-    //Serial.println(value[i]);
     i++;
   }
   //for(int j=0; j<4; j++) {
@@ -137,30 +133,19 @@ void Measure_function(void *uncast_data){
     //Serial.println(value[j]);
   //};
   
-
  *(data->temperatureRawPtr)=value[0];
   *(data->systolicPressRawPtr)=value[1];
   *(data->diastolicPressRawPtr)=value[2];
   *(data->pulseRateRawPtr)=value[3];
-  //Serial.print("raw data : ");
-  //Serial.println(*(data->temperatureRawPtr));
-  
-
-
-
 }
 
 void Compute_function(void *uncast_data){
   DataStructCompute* data;
   data = (DataStructCompute *)uncast_data;
-  //Serial.print("Compute value :");
-  //Serial.println(*(data->temperatureRawPtr));
-  sprintf(data->tempCorrectedPtr, "%s", String(5+0.75*(*(data->temperatureRawPtr))).c_str());
-  sprintf(data->systolicPressCorrectedPtr, "%s", String(9+2*(*(data->systolicPressRawPtr))).c_str());
-  sprintf(data->diastolicPressCorrectedPtr, "%s", String(6+1.5*(*(data->diastolicPressRawPtr))).c_str()); 
-  sprintf(data->pulseRateCorrectedPtr, "%s", String(8+3*(*(data->pulseRateRawPtr))).c_str());
- 
-
+  sprintf((char*)data->tempCorrectedPtr, "%s", String(5+0.75*(*(data->temperatureRawPtr))).c_str());
+  sprintf((char*)data->systolicPressCorrectedPtr, "%s", String(9+2*(*(data->systolicPressRawPtr))).c_str());
+  sprintf((char*)data->diastolicPressCorrectedPtr, "%s", String(6+1.5*(*(data->diastolicPressRawPtr))).c_str()); 
+  sprintf((char*)data->pulseRateCorrectedPtr, "%s", String(8+3*(*(data->pulseRateRawPtr))).c_str());
 }
  
 
@@ -168,10 +153,6 @@ void Display_function(void *uncast_data){
   DataStructDisplay* data;
   data=(DataStructDisplay*)uncast_data;
    tft.setRotation(1);
-
-   
-   
-   
    tft.setCursor(0, 30);
    tft.setTextSize(2);
    tft.setTextColor(WHITE);
@@ -278,7 +259,6 @@ void Status_function(void *uncast_data){
   Serial1.write("2");
   
   while( !Serial1.available()) {}
-  //Serial.println("Status function");
   serialResponse = Serial1.readStringUntil('\n');
 
   // Convert from String Object to String.
@@ -292,11 +272,7 @@ void Status_function(void *uncast_data){
   while ((str = strtok_r(p, " ", &p)) != NULL) // delimiter is the semicolon
   {  
     cast_str=(String)str;
-    //Serial.print("uncast");
-    //Serial.println(cast_str.toInt());
     value = cast_str.toInt();
-    //Serial.print(value);
-    
   }
   //for(int j=0; j<1; j++) {
     
@@ -307,21 +283,21 @@ void Status_function(void *uncast_data){
   *(data->batteryStatePtr)=value;
 }
 
-void Schedule_function(void *data){
-  
-}
-
 String taskName[numTask] = {"Measure", "Compute", "Display", "WarningAlarm", "Status"};
 String message; //message of task time
 #define taskqueFinishPin 30 //pin to be toggled after one cycle of task que
+unsigned long qStart_time; //the start time of taskque
 unsigned long start_time; //the start time of each task
-unsigned long taskTime[numTask]; //stored this execution time of each task
+unsigned long taskTime[numTask]; //store the execution time of each task
 
 void setup() {
+
+  //Allocate memory space for character array
   tempCorrected=(unsigned char*)malloc(sizeof(unsigned char)*10);
   systolicPressCorrected=(unsigned char*)malloc(sizeof(unsigned char)*10);
   diastolicPressCorrected=(unsigned char*)malloc(sizeof(unsigned char)*10);
   pulseRateCorrected=(unsigned char*)malloc(sizeof(unsigned char)*10);
+
   //Initialized task Measure
   Measure.myTask = Measure_function;
   MeasureData.temperatureRawPtr = &temperatureRaw;
@@ -330,6 +306,7 @@ void setup() {
   MeasureData.pulseRateRawPtr = &pulseRateRaw;
   Measure.taskDataPtr = &MeasureData;
   taskque[0] = &Measure;
+
   //Initialized task Compute
   Compute.myTask = Compute_function;
   ComputeData.temperatureRawPtr = &temperatureRaw;
@@ -342,6 +319,7 @@ void setup() {
   ComputeData.pulseRateCorrectedPtr = pulseRateCorrected;
   Compute.taskDataPtr = &ComputeData;
   taskque[1] = &Compute;
+
   //Initialized task Display
   Display.myTask = Display_function;
   DisplayData.tempCorrectedPtr = tempCorrected;
@@ -351,6 +329,7 @@ void setup() {
   DisplayData.batteryStatePtr = &batteryState;
   Display.taskDataPtr = &DisplayData;
   taskque[2] = &Display;
+
   //Initialized task WarningAlarm
   WarningAlarm.myTask = WarningAlarm_function;
   WarningAlarmData.temperatureRawPtr = &temperatureRaw;
@@ -360,22 +339,22 @@ void setup() {
   WarningAlarmData.batteryStatePtr = &batteryState;
   WarningAlarm.taskDataPtr = &WarningAlarmData;
   taskque[3] = &WarningAlarm;
+
   //Initialized task Status
   Status.myTask = Status_function;
   StatusData.batteryStatePtr = &batteryState;
   Status.taskDataPtr = &StatusData;
   taskque[4] = &Status;
-  //Initialized task Schedule
-  Schedule.myTask = Schedule_function;
-  Schedule.taskDataPtr = NULL;
+
   //Initialized taskqueFinishPin
   pinMode(taskqueFinishPin, OUTPUT);
   digitalWrite(taskqueFinishPin, LOW);
-  //Initialized serial port 0 & 1
-  Serial.begin(2000000);
-  Serial1.begin(2000000);
-  //Initialized for TFT
 
+  //Initialized serial port 0 & 1
+  Serial.begin(9600);
+  Serial1.begin(9600);
+
+  //Initialized for TFT
   Serial.println(F("TFT LCD test"));
   #ifdef USE_Elegoo_SHIELD_PINOUT
   Serial.println(F("Using Elegoo 2.4\" TFT Arduino Shield Pinout"));
@@ -423,13 +402,15 @@ void setup() {
   tft.fillScreen(BLACK);
 }
 
+/*Scheduler*/
 void loop() {
+  qStart_time = millis();
   for (int i=0; i<numTask; i++){
     start_time = millis();
     (taskque[i]->myTask)(taskque[i]->taskDataPtr); //execute task
     taskTime[i] = millis() - start_time;
-    while(millis() - start_time < 1000){} //schedule each task for 5 ms
   }
+  while(millis() - qStart_time < 5000){} //schedule whole taskque for 5 sec
   //toggle pin after one cycle of task que
   digitalWrite(taskqueFinishPin, !digitalRead(taskqueFinishPin));
   //show execution time for each task in serial monitor
