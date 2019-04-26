@@ -10,7 +10,9 @@ int diastolicPressRaw_count = 1;
 int pulseRateRaw_count = 1;
 bool temperatureRaw_flip = true;
 bool systolicPressRaw_flip = true; // if set to false, it means complete
+bool systolic_reset = false;
 bool diastolicPressRaw_flip = true; // if set to false, it means complete
+bool diastolic_reset = false;
 bool pulseRateRaw_flip = true;
 
 String whichTask;
@@ -24,13 +26,22 @@ void loop(){
   if ( Serial.available() > 0 ) {
     whichTask = Serial.readStringUntil('\0');
     if( whichTask == "1" ){  
-        measureData = String(get_temperatureRaw()) + " " + String(get_systolicPressRaw()) + " " +
-                      String(get_diastolicPressRaw()) + " " + String(get_pulseRateRaw());
+        // measureData = String(get_temperatureRaw()) + " " + String(get_systolicPressRaw()) + " " +
+        //               String(get_diastolicPressRaw()) + " " + String(get_pulseRateRaw());
+        measureData = "";
+        measureData += String(get_temperatureRaw());
+        measureData += " ";
+        measureData += String(get_systolicPressRaw());
+        measureData += " ";
+        measureData += String(get_diastolicPressRaw());
+        measureData += " ";
+        measureData += String(get_pulseRateRaw());
+        Serial.println(measureData);
     }
     else if( whichTask == "2" ){
         measureData = String(get_batteryStatus());
+        Serial.println(measureData);
     }
-    Serial.println(measureData);
   }
 }
 
@@ -56,32 +67,47 @@ unsigned int get_temperatureRaw(){
 
 unsigned int get_systolicPressRaw(){
   
-  if( !systolicPressRaw_flip ){
+  if( !diastolicPressRaw_flip && !systolic_reset ){
     systolicPressRaw = 80;
-    systolicPressRaw_flip = true;
+    systolic_reset = true;
   }
 
-  if( systolicPressRaw_count > 0 ) systolicPressRaw += 3;
-  else systolicPressRaw -= 1;
+  else if( systolicPressRaw > 100 && systolicPressRaw_flip == true ){
+    systolicPressRaw_flip = false; // complete
+    diastolicPressRaw_flip = true;
+    systolic_reset = false;
+  }
+  else if( systolicPressRaw > 100 && systolicPressRaw_flip == false ){
+    systolicPressRaw = systolicPressRaw;
+  }
 
-  if( systolicPressRaw > 100 ) systolicPressRaw_flip = false; // complete 
-  
+  else{
+    if( systolicPressRaw_count > 0 ) systolicPressRaw += 3;
+    else systolicPressRaw -= 1;
+  }
   
   systolicPressRaw_count *= -1 ;
   return systolicPressRaw;
 }
 
 unsigned int get_diastolicPressRaw(){
-  if( !diastolicPressRaw_flip ){
+  if( !systolicPressRaw_flip && !diastolic_reset ){
     diastolicPressRaw = 80;
-    diastolicPressRaw_flip = true;
+    diastolic_reset = true;
   }
 
-  if( diastolicPressRaw_count > 0 ) diastolicPressRaw -= 2;
-  else diastolicPressRaw += 1;
-
-  if( diastolicPressRaw < 40 ) diastolicPressRaw_flip = false; // complete 
-  
+  else if( diastolicPressRaw < 40 && diastolicPressRaw_flip == true ){
+    diastolicPressRaw_flip = false; // complete
+    systolicPressRaw_flip = true; 
+    diastolic_reset = false;
+  }
+  else if( diastolicPressRaw < 40 && diastolicPressRaw_flip == false ){
+    diastolicPressRaw = diastolicPressRaw;
+  }
+  else{
+    if( diastolicPressRaw_count > 0 ) diastolicPressRaw -= 2;
+    else diastolicPressRaw += 1;
+  }
   
   diastolicPressRaw_count *= -1 ;
   return diastolicPressRaw;
