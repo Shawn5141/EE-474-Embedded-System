@@ -113,7 +113,7 @@ void Measure_function(void *uncast_data){
   int value[4];
   
   while ( !Serial1.available()){}
-  Serial.println("Measure");
+  //Serial.println("Measure");
   serialResponse = Serial1.readStringUntil('\n');
 
   // Convert from String Object to String.
@@ -126,10 +126,10 @@ void Measure_function(void *uncast_data){
   while ((str = strtok_r(p, " ", &p)) != NULL) // delimiter is the semicolon
   {  
     cast_str=(String)str;
-    Serial.print("uncast_M ");
-    Serial.println(cast_str.toInt());
+    //Serial.print("uncast_M ");
+    //Serial.println(cast_str.toInt());
     value[i] = cast_str.toInt();
-    Serial.println(value[i]);
+    //Serial.println(value[i]);
     i++;
   }
   //for(int j=0; j<4; j++) {
@@ -142,8 +142,8 @@ void Measure_function(void *uncast_data){
   *(data->systolicPressRawPtr)=value[1];
   *(data->diastolicPressRawPtr)=value[2];
   *(data->pulseRateRawPtr)=value[3];
-  Serial.print("raw data : ");
-  Serial.println(*(data->temperatureRawPtr));
+  //Serial.print("raw data : ");
+  //Serial.println(*(data->temperatureRawPtr));
   
 
 
@@ -153,8 +153,8 @@ void Measure_function(void *uncast_data){
 void Compute_function(void *uncast_data){
   DataStructCompute* data;
   data = (DataStructCompute *)uncast_data;
-  Serial.print("Compute value :");
-  Serial.println(*(data->temperatureRawPtr));
+  //Serial.print("Compute value :");
+  //Serial.println(*(data->temperatureRawPtr));
   sprintf(data->tempCorrectedPtr, "%s", String(5+0.75*(*(data->temperatureRawPtr))).c_str());
   sprintf(data->systolicPressCorrectedPtr, "%s", String(9+2*(*(data->systolicPressRawPtr))).c_str());
   sprintf(data->diastolicPressCorrectedPtr, "%s", String(6+1.5*(*(data->diastolicPressRawPtr))).c_str()); 
@@ -176,7 +176,10 @@ void Display_function(void *uncast_data){
    tft.setTextSize(2);
    tft.setTextColor(WHITE);
    tft.println("Blood Pressure: ");
-   tft.print(" Systolic Pressure: ");
+   tft.setTextSize(1);
+   tft.println("        ");
+   tft.setTextSize(2);
+   tft.print(" Systolic : ");
    if (bpHigh==true){
       tft.setTextColor(RED,BLACK);
       
@@ -189,39 +192,48 @@ void Display_function(void *uncast_data){
       tft.println(" mmHg   ");};
     
    tft.setTextColor(WHITE);
-   tft.print(" Diastolic Pressure:");
+   tft.setTextSize(1);
+   tft.println("        ");
+   tft.setTextSize(2);
+   tft.print(" Diastolic :");
    if (pulseLow==true){
       tft.setTextColor(RED,BLACK);
       
       tft.print((char*)(data->diastolicPressCorrectedPtr));
-      tft.println(" mmHg   ");}
+      tft.println(" mmHg ");}
    else{
       tft.setTextColor(GREEN,BLACK);
       tft.print((char*)(data->diastolicPressCorrectedPtr));
-      tft.println(" mmHg    ");};
+      tft.println(" mmHg  ");};
    
    tft.setTextColor(WHITE);
-   tft.print("Temperature:        ");
+   tft.println("        ");
+   tft.print("Temperature:    ");
    if (tempHigh==true){tft.setTextColor(RED,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
    tft.print((char*)(data->tempCorrectedPtr));
-   tft.println("deg C    ");
+   tft.setTextSize(1);
+   tft.print((char)223);
+   tft.setTextSize(2);
+   tft.println("C  ");
 
   
    tft.setTextColor(WHITE);
-   tft.print("Pulse Rate:         ");
+   tft.println("        ");
+   tft.print("Pulse Rate:     ");
    if (pulseLow==true){tft.setTextColor(RED,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
    tft.print((char*)(data->pulseRateCorrectedPtr));
-   tft.println(" BPM   ");
+   tft.println(" BPM ");
 
    
    tft.setTextColor(WHITE);
-   tft.print("Battery status:     ");
+   tft.println("        ");
+   tft.print("Battery status: ");
    if (batteryState<=20){tft.setTextColor(RED,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
    tft.print(*(data->batteryStatePtr));
-   tft.println("     ");
+   tft.println("   ");
 
    tft.println();
    tft.println();
@@ -360,8 +372,8 @@ void setup() {
   pinMode(taskqueFinishPin, OUTPUT);
   digitalWrite(taskqueFinishPin, LOW);
   //Initialized serial port 0 & 1
-  Serial.begin(9600);
-  Serial1.begin(9600);
+  Serial.begin(2000000);
+  Serial1.begin(2000000);
   //Initialized for TFT
 
   Serial.println(F("TFT LCD test"));
@@ -425,5 +437,5 @@ void loop() {
   for (int i=0; i<numTask; i++){
     message += taskName[i] + ": " + taskTime[i] + " ms\n";
   }
-  //Serial.write(message.c_str());
+  Serial.write(message.c_str());
 }
