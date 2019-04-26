@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <windows.h>
-#include "C:\Users\s1991\Downloads\UW_19_Spring\Embed System\HW\hw1\Application8.h"
+#include "Application8.h"
 // the main program
 
 
