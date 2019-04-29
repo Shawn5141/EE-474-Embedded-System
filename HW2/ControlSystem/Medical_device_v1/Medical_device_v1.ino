@@ -328,7 +328,7 @@ void setup() {
   DisplayData.pulseRateCorrectedPtr = pulseRateCorrected;
   DisplayData.batteryStatePtr = &batteryState;
   Display.taskDataPtr = &DisplayData;
-  taskque[2] = &Display;
+  taskque[4] = &Display;
 
   //Initialized task WarningAlarm
   WarningAlarm.myTask = WarningAlarm_function;
@@ -344,7 +344,7 @@ void setup() {
   Status.myTask = Status_function;
   StatusData.batteryStatePtr = &batteryState;
   Status.taskDataPtr = &StatusData;
-  taskque[4] = &Status;
+  taskque[2] = &Status;
 
   //Initialized taskqueFinishPin
   pinMode(taskqueFinishPin, OUTPUT);
