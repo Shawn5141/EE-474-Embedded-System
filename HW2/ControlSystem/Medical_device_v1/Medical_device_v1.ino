@@ -305,7 +305,7 @@ void setup() {
   MeasureData.diastolicPressRawPtr = &diastolicPressRaw;
   MeasureData.pulseRateRawPtr = &pulseRateRaw;
   Measure.taskDataPtr = &MeasureData;
-  taskque[0] = &Measure;
+  taskque[2] = &Measure;
 
   //Initialized task Compute
   Compute.myTask = Compute_function;
@@ -318,7 +318,7 @@ void setup() {
   ComputeData.diastolicPressCorrectedPtr = diastolicPressCorrected;
   ComputeData.pulseRateCorrectedPtr = pulseRateCorrected;
   Compute.taskDataPtr = &ComputeData;
-  taskque[1] = &Compute;
+  taskque[3] = &Compute;
 
   //Initialized task Display
   Display.myTask = Display_function;
@@ -328,7 +328,7 @@ void setup() {
   DisplayData.pulseRateCorrectedPtr = pulseRateCorrected;
   DisplayData.batteryStatePtr = &batteryState;
   Display.taskDataPtr = &DisplayData;
-  taskque[4] = &Display;
+  taskque[1] = &Display;
 
   //Initialized task WarningAlarm
   WarningAlarm.myTask = WarningAlarm_function;
@@ -338,13 +338,13 @@ void setup() {
   WarningAlarmData.pulseRateRawPtr = &pulseRateRaw;
   WarningAlarmData.batteryStatePtr = &batteryState;
   WarningAlarm.taskDataPtr = &WarningAlarmData;
-  taskque[3] = &WarningAlarm;
+  taskque[0] = &WarningAlarm;
 
   //Initialized task Status
   Status.myTask = Status_function;
   StatusData.batteryStatePtr = &batteryState;
   Status.taskDataPtr = &StatusData;
-  taskque[2] = &Status;
+  taskque[4] = &Status;
 
   //Initialized taskqueFinishPin
   pinMode(taskqueFinishPin, OUTPUT);
