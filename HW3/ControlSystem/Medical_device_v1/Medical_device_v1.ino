@@ -42,67 +42,122 @@ Elegoo_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
 /*Shared varibles*/
 //Measurements
-unsigned int temperatureRaw=75, systolicPressRaw=80;
-unsigned int diastolicPressRaw=80, pulseRateRaw=50;
+unsigned int temperatureRawBuf[8], bloodPressRawBuf[16];
+unsigned int pulseRateRawBuf[8];
+//Buffer index
+unsigned char tempIndex=0, bloodPressIndex=0, pulseRateIndex=0;
 //Display
-unsigned char *tempCorrected=NULL, *systolicPressCorrected=NULL;
-unsigned char *diastolicPressCorrected=NULL, *pulseRateCorrected=NULL;
+unsigned char tempCorrectedBuf[8], bloodPressCorrectedBuf[16]; 
+unsigned char pulseRateCorrectedBuf[8];
 //Status
 unsigned short batteryState=200;
 //Alarms
-unsigned char bpOutOfRange=0,tempOutOfRange=0, pulseOutOfRange=0;
+unsigned char bpOutOfRange=0, tempOutOfRange=0, pulseOutOfRange=0;
 //Warning
 bool bpHigh=false, tempHigh=false, pulseLow=false;
+//TFT Keypad
+unsigned short functionSelect=0, measurementSelection=0, alarmAcknowledge=0;
 
 
 /*Define tasks*/
-#define numTask 5
+#define numTask 7
 typedef struct TCB{
   void (*myTask)(void*);
-  void* taskDataPtr;
+  void *taskDataPtr;
+  TCB *next=NULL, *prev=NULL;
 }TCB;
-TCB Measure, Compute, Display;
-TCB WarningAlarm, Status;
-TCB* taskque[numTask];
+String taskName[numTask] = {"Display", "TFTKeypad", "WarningAlarm", "Compute"\
+                            "Measure", "Status", "Communications"};
+TCB Measure, Compute;
+TCB Display, WarningAlarm, Status;
+TCB TFTKeypad, Communications;
+TCB *head=NULL, *tail=NULL, *currentTask=NULL;
+TCB *taskArray[numTask];
+bool taskAddFlag[numTask]={false};
+bool taskInQue[numTask]={false};
+
+
+/*Scheduler data*/
+String message; //message of task time
+#define taskqueFinishPin 30 //pin to be toggled after one cycle of task que
+unsigned long mStart_time[4]; //the start time of each measurement
+bool mAvailable[4]={true}; //availibility of each measurement
+unsigned long start_time; //the start time of each task
+unsigned long taskTime[numTask]; //store the execution time of each task
+
 
 /*Define data structures*/
 //Task Measure's data
 typedef struct DataStructMeasure{
-  unsigned int *temperatureRawPtr, *systolicPressRawPtr;
-  unsigned int *diastolicPressRawPtr, *pulseRateRawPtr;
+  unsigned char id;
+  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr;
+  unsigned short *measurementSelectionPtr;
+  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
+  bool *addFlagPtr;
 }DataStructMeasure;
 DataStructMeasure MeasureData;
 
 //Task Compute's data
 typedef struct DataStructCompute{
-  unsigned int *temperatureRawPtr, *systolicPressRawPtr;
-  unsigned int *diastolicPressRawPtr, *pulseRateRawPtr;
-  unsigned char *tempCorrectedPtr, *systolicPressCorrectedPtr;
-  unsigned char *diastolicPressCorrectedPtr, *pulseRateCorrectedPtr;
+  unsigned char id;
+  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr;
+  unsigned char *tempCorrectedBufPtr, *bloodPressCorrectedBufPtr;
+  unsigned char *pulseRateCorrectedBufPtr;
+  unsigned short *measurementSelectionPtr;
+  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
+  bool *addFlagPtr;
 }DataStructCompute;
 DataStructCompute ComputeData;
 
 //Task Display's data
 typedef struct DataStructDisplay{
-  unsigned char *tempCorrectedPtr, *systolicPressCorrectedPtr;
-  unsigned char *diastolicPressCorrectedPtr, *pulseRateCorrectedPtr;
+  unsigned char id;
+  unsigned char *tempCorrectedBufPtr, *bloodPressCorrectedBufPtr;
+  unsigned char *pulseRateCorrectedBufPtr;
   unsigned short *batteryStatePtr;
+  unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr;
+  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
+  bool *addFlagPtr;
 }DataStructDisplay;
 DataStructDisplay DisplayData;
 
 //Task WarningAlarm's data
 typedef struct DataStructWarningAlarm{
-  unsigned int *temperatureRawPtr, *systolicPressRawPtr;
-  unsigned int *diastolicPressRawPtr, *pulseRateRawPtr;
+  unsigned char id;
+  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr;
   unsigned short *batteryStatePtr;
+  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
+  bool *addFlagPtr, *addComFlagPtr;
 }DataStructWarningAlarm;
 DataStructWarningAlarm WarningAlarmData;
 
 //Task Status's data
 typedef struct DataStructStatus{
+  unsigned char id;
   unsigned short *batteryStatePtr;
+  bool *addFlagPtr;
 }DataStructStatus;
 DataStructStatus StatusData;
+
+//Task TFTKeypad's data
+typedef struct DataStructTFTKeypad{
+  unsigned char id;
+  unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr;
+  bool *addFlagPtr;
+}DataStructTFTKeypad;
+DataStructTFTKeypad TFTKeypadData;
+
+//Task Communications's data
+typedef struct DataStructCommunications{
+  unsigned char id;
+  unsigned char *tempCorrectedBufPtr, *bloodPressCorrectedBufPtr;
+  unsigned char *pulseRateCorrectedBufPtr;
+  unsigned short *batteryStatePtr;
+  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
+  bool *addFlagPtr;
+}DataStructCommunications;
+DataStructCommunications CommunicationsData;
+
 
 /*Tasks's function*/
 void Measure_function(void *uncast_data){
@@ -336,68 +391,112 @@ void Status_function(void *uncast_data){
   *(data->batteryStatePtr)=value;
 }
 
-String taskName[numTask] = {"Measure", "Compute", "Display", "WarningAlarm", "Status"};
-String message; //message of task time
-#define taskqueFinishPin 30 //pin to be toggled after one cycle of task que
-unsigned long qStart_time; //the start time of taskque
-unsigned long start_time; //the start time of each task
-unsigned long taskTime[numTask]; //store the execution time of each task
 
 void setup() {
 
-  //Allocate memory space for character array
-  tempCorrected=(unsigned char*)malloc(sizeof(unsigned char)*10);
-  systolicPressCorrected=(unsigned char*)malloc(sizeof(unsigned char)*10);
-  diastolicPressCorrected=(unsigned char*)malloc(sizeof(unsigned char)*10);
-  pulseRateCorrected=(unsigned char*)malloc(sizeof(unsigned char)*10);
-
+  //Initialized buffers
+  temperatureRawBuf[0] = 75; pulseRateRawBuf[0] = 0;
+  bloodPressRawBuf[0] = 80; bloodPressRawBuf[8] = 80;
+  
   //Initialized task Measure
   Measure.myTask = Measure_function;
-  MeasureData.temperatureRawPtr = &temperatureRaw;
-  MeasureData.systolicPressRawPtr = &systolicPressRaw;
-  MeasureData.diastolicPressRawPtr = &diastolicPressRaw;
-  MeasureData.pulseRateRawPtr = &pulseRateRaw;
+  MeasureData.temperatureRawBufPtr = temperatureRawBuf;
+  MeasureData.bloodPressRawBufPtr = bloodPressRawBuf;
+  MeasureData.pulseRateRawBufPtr = pulseRateRawBuf;
+  MeasureData.measurementSelectionPtr = &measurementSelection;
+  MeasureData.tempIndexPtr = &tempIndex;
+  MeasureData.bloodPressIndexPtr = &bloodPressIndex;
+  MeasureData.pulseRateIndexPtr = &pulseRateIndex;
+  MeasureData.id = 4;
+  MeasureData.addFlagPtr = &taskAddFlag[4];
   Measure.taskDataPtr = &MeasureData;
-  taskque[2] = &Measure;
+  taskArray[4] = &Measure;
 
   //Initialized task Compute
   Compute.myTask = Compute_function;
-  ComputeData.temperatureRawPtr = &temperatureRaw;
-  ComputeData.systolicPressRawPtr = &systolicPressRaw;
-  ComputeData.diastolicPressRawPtr = &diastolicPressRaw;
-  ComputeData.pulseRateRawPtr = &pulseRateRaw;
-  ComputeData.tempCorrectedPtr = tempCorrected;
-  ComputeData.systolicPressCorrectedPtr = systolicPressCorrected;
-  ComputeData.diastolicPressCorrectedPtr = diastolicPressCorrected;
-  ComputeData.pulseRateCorrectedPtr = pulseRateCorrected;
+  ComputeData.temperatureRawBufPtr = temperatureRawBuf;
+  ComputeData.bloodPressRawBufPtr = bloodPressRawBuf;
+  ComputeData.pulseRateRawBufPtr = pulseRateRawBuf;
+  ComputeData.tempCorrectedBufPtr = tempCorrectedBuf;
+  ComputeData.bloodPressCorrectedBufPtr = bloodPressCorrectedBuf;
+  ComputeData.pulseRateCorrectedBufPtr = pulseRateCorrectedBuf;
+  ComputeData.measurementSelectionPtr = &measurementSelection;
+  ComputeData.tempIndexPtr = &tempIndex;
+  ComputeData.bloodPressIndexPtr = &bloodPressIndex;
+  ComputeData.pulseRateIndexPtr = &pulseRateIndex;
+  ComputeData.id = 3;
+  ComputeData.addFlagPtr = &taskAddFlag[3];
   Compute.taskDataPtr = &ComputeData;
-  taskque[3] = &Compute;
+  taskArray[3] = &Compute;
 
   //Initialized task Display
   Display.myTask = Display_function;
-  DisplayData.tempCorrectedPtr = tempCorrected;
-  DisplayData.systolicPressCorrectedPtr = systolicPressCorrected;
-  DisplayData.diastolicPressCorrectedPtr = diastolicPressCorrected;
-  DisplayData.pulseRateCorrectedPtr = pulseRateCorrected;
+  DisplayData.tempCorrectedBufPtr = tempCorrectedBuf;
+  DisplayData.bloodPressCorrectedBufPtr = bloodPressCorrectedBuf;
+  DisplayData.pulseRateCorrectedBufPtr = pulseRateCorrectedBuf;
   DisplayData.batteryStatePtr = &batteryState;
+  DisplayData.measurementSelectionPtr = &measurementSelection;
+  DisplayData.alarmAcknowledgePtr = &alarmAcknowledge;
+  DisplayData.functionSelectPtr = &functionSelect;
+  DisplayData.tempIndexPtr = &tempIndex;
+  DisplayData.bloodPressIndexPtr = &bloodPressIndex;
+  DisplayData.pulseRateIndexPtr = &pulseRateIndex;
+  DisplayData.id = 0;
+  DisplayData.addFlagPtr = &taskAddFlag[0];
   Display.taskDataPtr = &DisplayData;
-  taskque[1] = &Display;
+  taskArray[0] = &Display;
 
   //Initialized task WarningAlarm
   WarningAlarm.myTask = WarningAlarm_function;
-  WarningAlarmData.temperatureRawPtr = &temperatureRaw;
-  WarningAlarmData.systolicPressRawPtr = &systolicPressRaw;
-  WarningAlarmData.diastolicPressRawPtr = &diastolicPressRaw;
-  WarningAlarmData.pulseRateRawPtr = &pulseRateRaw;
+  WarningAlarmData.temperatureRawBufPtr = temperatureRawBuf;
+  WarningAlarmData.bloodPressRawBufPtr = bloodPressRawBuf;
+  WarningAlarmData.pulseRateRawBufPtr = pulseRateRawBuf;
   WarningAlarmData.batteryStatePtr = &batteryState;
+  WarningAlarmData.tempIndexPtr = &tempIndex;
+  WarningAlarmData.bloodPressIndexPtr = &bloodPressIndex;
+  WarningAlarmData.pulseRateIndexPtr = &pulseRateIndex;
+  WarningAlarmData.id = 2;
+  WarningAlarmData.addFlagPtr = &taskAddFlag[2];
+  WarningAlarmData.addComFlagPtr = &taskAddFlag[6];
   WarningAlarm.taskDataPtr = &WarningAlarmData;
-  taskque[0] = &WarningAlarm;
+  taskArray[2] = &WarningAlarm;
 
   //Initialized task Status
   Status.myTask = Status_function;
   StatusData.batteryStatePtr = &batteryState;
+  StatusData.id = 5;
+  StatusData.addFlagPtr = &taskAddFlag[5];
   Status.taskDataPtr = &StatusData;
-  taskque[4] = &Status;
+  taskArray[5] = &Status;
+
+  //Initialized task TFTKeypad
+  TFTKeypad.myTask = TFTKeypad_function;
+  TFTKeypadData.measurementSelectionPtr = &measurementSelection;
+  TFTKeypadData.alarmAcknowledgePtr = &alarmAcknowledge;
+  TFTKeypadData.functionSelectPtr = &functionSelect;
+  TFTKeypadData.id = 1;
+  TFTKeypadData.addFlagPtr = &taskAddFlag[1];
+  TFTKeypad.taskDataPtr = &TFTKeypadData;
+  taskArray[1] = &TFTKeypad;
+
+  //Initialized task Communications
+  Communications.myTask = Communications_function;
+  CommunicationsData.tempCorrectedBufPtr = tempCorrectedBuf;
+  CommunicationsData.bloodPressCorrectedBufPtr = bloodPressCorrectedBuf;
+  CommunicationsData.pulseRateCorrectedBufPtr = pulseRateCorrectedBuf;
+  CommunicationsData.batteryStatePtr = &batteryState;
+  CommunicationsData.tempIndexPtr = &tempIndex;
+  CommunicationsData.bloodPressIndexPtr = &bloodPressIndex;
+  CommunicationsData.pulseRateIndexPtr = &pulseRateIndex;
+  CommunicationsData.id = 6;
+  CommunicationsData.addFlagPtr = &taskAddFlag[6];
+  Communications.taskDataPtr = &CommunicationsData;
+  taskArray[6] = &Communications;
+
+  //Initialized taskque
+  taskAddFlag[0] = true; Insert(taskArray[0]); taskInQue[0] = true;
+  taskAddFlag[1] = true; Insert(taskArray[1]); taskInQue[1] = true;
+  taskAddFlag[2] = true; Insert(taskArray[2]); taskInQue[2] = true;
 
   //Initialized taskqueFinishPin
   pinMode(taskqueFinishPin, OUTPUT);
@@ -457,19 +556,46 @@ void setup() {
 
 /*Scheduler*/
 void loop() {
-  qStart_time = millis();
-  for (int i=0; i<numTask; i++){
-    start_time = millis();
-    (taskque[i]->myTask)(taskque[i]->taskDataPtr); //execute task
-    taskTime[i] = millis() - start_time;
+  for (int i=0; i<numTask; i++)
+    taskTime[i] = 0;
+  for (int i=0; i<4; i++){
+    if (!mAvailable[i] && millis() - mStart_time[i] >= 5000)
+      mAvailable[i] = true;
   }
-  while(millis() - qStart_time < 5000){} //schedule whole taskque for 5 sec
+  if (mAvailable[3]){
+    taskAddFlag[5] = true;
+    taskAddFlag[2] = true;
+    mAvailable[3] = false;
+    mStart_time[3] = millis();
+  }
+  if (measurementSelection && mAvailable[measurementSelection-1]){
+    for (int i=0; i<3; i++)
+      taskAddFlag[i+2] = true;
+    mAvailable[measurementSelection-1] = false;
+    mStart_time[measurementSelection-1] = millis();
+  }
+  for (int i=0; i<numTask; i++){
+    if (taskAddFlag[i]==false && taskInQue[i]==true){
+      Delete(taskArray[i]);
+      taskInQue[i] = false;
+    }
+    else if (taskAddFlag[i]==true && taskInQue[i]==false){
+      Insert(taskArray[i]);
+      taskInQue[i] = true;
+    }
+  }
+  currentTask = head;
+  while (currentTask != NULL){
+    start_time = millis();
+    (currentTask->myTask)(currentTask->taskDataPtr); //execute task
+    taskTime[*(unsigned char *)(currentTask->taskDataPtr)] = millis() - start_time;
+    currentTask = currentTask->next;
+  }
   //toggle pin after one cycle of task que
   digitalWrite(taskqueFinishPin, !digitalRead(taskqueFinishPin));
   //show execution time for each task in serial monitor
   message = "";
-  for (int i=0; i<numTask; i++){
+  for (int i=0; i<numTask; i++)
     message += taskName[i] + ": " + taskTime[i] + " ms\n";
-  }
   Serial.write(message.c_str());
 }
