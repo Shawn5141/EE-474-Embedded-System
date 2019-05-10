@@ -7,24 +7,24 @@ typedef struct TCB{
    struct TCB* prev;
 }TCB;
 
+TCB* head=NULL;
+TCB* tail=NULL;
 
-void insert(TCB* node,TCB* head,TCB* tail){
+void insert(TCB* node){
    if(NULL==head){
         head=node;
         tail=node;
 
     }else{
-        tail->next=node;
-        node->prev=tail;
-        node->next=NULL;
-        tail=node;
-        printf("tail %d \n",tail->val);
-        printf("node %d \n",node->val);  
+        head->prev=node;
+        node->next=head;
+        head=head->prev;
+          
     }
     return;
 }
 
-void Delete(TCB* node,TCB* head,TCB* tail){
+void Delete(TCB* node){
    
     if (head->next ==NULL){
         return;
@@ -32,17 +32,14 @@ void Delete(TCB* node,TCB* head,TCB* tail){
         head=tail=NULL;
     }else if(head==node){
         head= head->next;
+
+
+            
     }else if (tail==node){
         tail=tail->prev;
-    }else{
-        printf("what\n");
-        if (node->next==NULL){
-           printf("null");
-        }
-        printf("test %d",node->next->val);
-        printf("\n");      
-        node->next->prev=node->prev;
+    }else{              
         node->prev->next=node->next;
+        node->next->prev=node->prev;
         
     }
     free(node);
@@ -56,23 +53,33 @@ void Delete(TCB* node,TCB* head,TCB* tail){
 
 
 int main(int argc,char** argv){
-    TCB* head=malloc(sizeof(TCB)); 
-    TCB* tail=malloc(sizeof(TCB));
-    TCB* Node=malloc(sizeof(TCB));
-    head->val=0;
-    tail->val=1;
+     
+    
+    
+    TCB* Node;
+    Node=(TCB*)malloc(sizeof(TCB));
     Node->val=2;
+    
+    
+    TCB* Node1;
+    Node1=(TCB*)malloc(sizeof(TCB));
+    Node1->val=1;
+    TCB* Node2;
+    Node2=(TCB*)malloc(sizeof(TCB));
+    Node2->val=0;
+    
 
+    head=Node;
+    tail=Node1;
     head->next=tail;
     head->prev=NULL;
     tail->prev=head;
     tail->next=NULL;
 
-    insert(Node,head,tail);
-    printf("outsideiiii %d",Node->val);
-    printf("hey");
-    Delete(Node,head,tail);
-    printf("%d",tail->val);
+    insert(Node2);
+    printf("head %d",head->val);
+    Delete(Node);
+    printf("tail%d",head->next->val);
     printf("\n");
     return 0;
 }
