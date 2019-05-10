@@ -57,7 +57,7 @@ unsigned char bpOutOfRange=0, tempOutOfRange=0, pulseOutOfRange=0;
 bool bpHigh=false, tempHigh=false, pulseLow=false;
 //TFT Keypad
 unsigned short functionSelect=0, measurementSelection=0, alarmAcknowledge=0;
-
+unsigned short initial_val_menu=0, initial_val_Ann=0;
 
 /*Define tasks*/
 #define numTask 7
@@ -117,6 +117,7 @@ typedef struct DataStructDisplay{
   unsigned short *batteryStatePtr;
   unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr;
   unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
+  unsigned short *initial_val_menuPtr, *initial_val_AnnPtr;
   bool *addFlagPtr;
 }DataStructDisplay;
 DataStructDisplay DisplayData;
@@ -125,7 +126,7 @@ DataStructDisplay DisplayData;
 typedef struct DataStructWarningAlarm{
   unsigned char id;
   unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr;
-  unsigned short *batteryStatePtr;
+  unsigned short *batteryStatePtr, *alarmAcknowledgePtr;
   unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
   bool *addFlagPtr, *addComFlagPtr;
 }DataStructWarningAlarm;
@@ -144,6 +145,7 @@ typedef struct DataStructTFTKeypad{
   unsigned char id;
   unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr;
   bool *addFlagPtr;
+  unsigned short *initial_val_menuPtr, *initial_val_AnnPtr;
 }DataStructTFTKeypad;
 DataStructTFTKeypad TFTKeypadData;
 
@@ -448,6 +450,9 @@ void Status_function(void *uncast_data){
   *(data->batteryStatePtr)=value;
 }
 
+void TFTKeypad_function(void *uncast){
+  
+}
 
 void setup() {
 
@@ -498,6 +503,8 @@ void setup() {
   DisplayData.tempIndexPtr = &tempIndex;
   DisplayData.bloodPressIndexPtr = &bloodPressIndex;
   DisplayData.pulseRateIndexPtr = &pulseRateIndex;
+  DisplayData.initial_val_menuPtr = &initial_val_menu;
+  DisplayData.initial_val_AnnPtr = &initial_val_Ann;
   DisplayData.id = 0;
   DisplayData.addFlagPtr = &taskAddFlag[0];
   Display.taskDataPtr = &DisplayData;
@@ -509,6 +516,7 @@ void setup() {
   WarningAlarmData.bloodPressRawBufPtr = bloodPressRawBuf;
   WarningAlarmData.pulseRateRawBufPtr = pulseRateRawBuf;
   WarningAlarmData.batteryStatePtr = &batteryState;
+  WarningAlarmData.alarmAcknowledgePtr = &alarmAcknowledge;
   WarningAlarmData.tempIndexPtr = &tempIndex;
   WarningAlarmData.bloodPressIndexPtr = &bloodPressIndex;
   WarningAlarmData.pulseRateIndexPtr = &pulseRateIndex;
@@ -531,6 +539,8 @@ void setup() {
   TFTKeypadData.measurementSelectionPtr = &measurementSelection;
   TFTKeypadData.alarmAcknowledgePtr = &alarmAcknowledge;
   TFTKeypadData.functionSelectPtr = &functionSelect;
+  TFTKeypadData.initial_val_menuPtr = &initial_val_menu;
+  TFTKeypadData.initial_val_AnnPtr = &initial_val_Ann;
   TFTKeypadData.id = 1;
   TFTKeypadData.addFlagPtr = &taskAddFlag[1];
   TFTKeypad.taskDataPtr = &TFTKeypadData;
