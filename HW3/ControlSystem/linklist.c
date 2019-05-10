@@ -9,7 +9,7 @@ typedef struct TCB{
 
 
 void insert(TCB* node,TCB* head,TCB* tail){
-    if (NULL==head){
+   if(NULL==head){
         head=node;
         tail=node;
 
@@ -24,26 +24,29 @@ void insert(TCB* node,TCB* head,TCB* tail){
     return;
 }
 
-void delete(TCB* node,TCB* head,TCB* tail){
-
+void Delete(TCB* node,TCB* head,TCB* tail){
+   
     if (head->next ==NULL){
         return;
     }else if (head==tail){
         head=tail=NULL;
-        free(head);
-        free(tail);
     }else if(head==node){
         head= head->next;
     }else if (tail==node){
         tail=tail->prev;
     }else{
-       
-        node->prev->next=node->next;
+        printf("what\n");
+        if (node->next==NULL){
+           printf("null");
+        }
+        printf("test %d",node->next->val);
+        printf("\n");      
         node->next->prev=node->prev;
-        node=NULL;
-        free(node);
+        node->prev->next=node->next;
+        
     }
-    
+    free(node);
+    return;
 
 
 }
@@ -66,9 +69,9 @@ int main(int argc,char** argv){
     tail->next=NULL;
 
     insert(Node,head,tail);
-    printf("outside %d",Node->val);
-    printf("\n");
-    delete(Node,head,tail);
+    printf("outsideiiii %d",Node->val);
+    printf("hey");
+    Delete(Node,head,tail);
     printf("%d",tail->val);
     printf("\n");
     return 0;
