@@ -143,21 +143,25 @@ unsigned int get_diastolicPressRaw(){
 unsigned int get_pulseRateRaw(){
 
   // before pulseRateRaw exceed 50
-  if( pulseRateRaw_flip ){
-    if( pulseRateRaw_count > 0 ) pulseRateRaw -= 1;
-    else pulseRateRaw += 3;
+//  if( pulseRateRaw_flip ){
+//    if( pulseRateRaw_count > 0 ) pulseRateRaw -= 1;
+//    else pulseRateRaw += 3;
+//
+//    if( pulseRateRaw > 40 ) pulseRateRaw_flip = false; 
+//  }
+//
+//  // before pulseRateRaw lower than 15
+//  else{
+//    if( pulseRateRaw_count > 0 ) pulseRateRaw += 1;
+//    else pulseRateRaw -= 3;
+//
+//    if( pulseRateRaw < 15 ) pulseRateRaw_flip = true; 
+//  }
 
-    if( pulseRateRaw > 40 ) pulseRateRaw_flip = false; 
-  }
-
-  // before pulseRateRaw lower than 15
-  else{
-    if( pulseRateRaw_count > 0 ) pulseRateRaw += 1;
-    else pulseRateRaw -= 3;
-
-    if( pulseRateRaw < 15 ) pulseRateRaw_flip = true; 
-  }
-
+  pulseRateRaw *= (1.0+(random(-20, 20)/100.0));
+  if( pulseRateRaw > 200) pulseRateRaw = 200;
+  else if( pulseRateRaw < 0) pulseRateRaw = 0;
+  
   // flip counter
   pulseRateRaw_count *= -1 ;
   return pulseRateRaw;
