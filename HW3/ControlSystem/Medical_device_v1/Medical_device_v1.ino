@@ -350,19 +350,19 @@ void Communications_function(void *uncast_data){
   data=(DataStructDisplay*)uncast_data;
 
   Serial.write("Temperature:          ");
-  Serial.write(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
+  Serial.print(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
   Serial.write(" C\n");
   Serial.write("Systolic pressure:    ");
-  Serial.write(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
+  Serial.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
   Serial.write(" mm Hg\n");
   Serial.write("Diastolic pressure:   ");
-  Serial.write(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr) + 8));
+  Serial.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr) + 8));
   Serial.write(" mm Hg\n");
   Serial.write("Pulse rate:           ");
-  Serial.write(*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr)));
+  Serial.print(*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr)));
   Serial.write(" BPM\n");
   Serial.write("Battery:              ");
-  Serial.write(*(data->batteryStatePtr));
+  Serial.print(*(data->batteryStatePtr));
   Serial.write("\n");
 
   *(data->addFlagPtr) = false;
