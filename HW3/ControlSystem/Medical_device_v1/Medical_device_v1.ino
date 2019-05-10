@@ -121,8 +121,7 @@ typedef struct TCB{
   void *taskDataPtr;
   TCB *next=NULL, *prev=NULL;
 }TCB;
-String taskName[numTask] = {"Display", "TFTKeypad", "WarningAlarm", "Compute"\
-                            "Measure", "Status", "Communications"};
+String taskName[numTask] = {"Display", "TFTKeypad", "WarningAlarm", "Compute", "Measure", "Status", "Communications"};
 TCB Measure, Compute;
 TCB Display, WarningAlarm, Status;
 TCB TFTKeypad, Communications;
@@ -136,7 +135,7 @@ bool taskInQue[numTask]={false};
 String message; //message of task time
 #define taskqueFinishPin 30 //pin to be toggled after one cycle of task que
 unsigned long mStart_time[4]; //the start time of each measurement
-bool mAvailable[4]={true}; //availibility of each measurement
+bool mAvailable[4]={true,true,true,true}; //availibility of each measurement
 unsigned long start_time; //the start time of each task
 unsigned long taskTime[numTask]; //store the execution time of each task
 
@@ -346,10 +345,10 @@ void Compute_function(void *uncast_data){
 }
 
 void Communications_function(void *uncast_data){
-  DataStructDisplay* data;
-  data=(DataStructDisplay*)uncast_data;
+  DataStructCommunications* data;
+  data=(DataStructCommunications*)uncast_data;
 
-  Serial.write("Temperature:          ");
+  /*Serial.write("Temperature:          ");
   Serial.print(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
   Serial.write(" C\n");
   Serial.write("Systolic pressure:    ");
@@ -363,7 +362,7 @@ void Communications_function(void *uncast_data){
   Serial.write(" BPM\n");
   Serial.write("Battery:              ");
   Serial.print(*(data->batteryStatePtr));
-  Serial.write("\n");
+  Serial.write("\n");*/
 
   *(data->addFlagPtr) = false;
 }
@@ -493,7 +492,7 @@ void Display_function(void *uncast_data){
 
     //Todo the acknoledge block
     
-    Serial.println("display screen");
+    //Serial.println("display screen");
     
   }else{
 
@@ -592,19 +591,12 @@ void TFTKeypad_function(void *uncast_data){
   
   if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
     
-
-    if (p.y < (TS_MINY-5)) {
-      Serial.println("erase");
-      // press the bottom of the screen to erase 
-      tft.fillRect(0, W, tft.width(), tft.height()-W, BLACK);
-    }
-    
     p.x = map(p.x, TS_MINX, TS_MAXX, tft.width(), 0);
     p.y = (tft.height()-map(p.y, TS_MINY, TS_MAXY, tft.height(), 0));
     
-    Serial.print("("); Serial.print(p.x);
+    /*Serial.print("("); Serial.print(p.x);
     Serial.print(", "); Serial.print(p.y);
-    Serial.println(")");
+    Serial.println(")");*/
 
 
 
@@ -949,6 +941,7 @@ void loop() {
     mAvailable[measurementSelection-1] = false;
     mStart_time[measurementSelection-1] = millis();
   }
+  //Serial.println("  **Schdeuler**  ");
   for (int i=0; i<numTask; i++){
     if (taskAddFlag[i]==false && taskInQue[i]==true){
       Delete(taskArray[i]);
@@ -960,17 +953,35 @@ void loop() {
     }
   }
   currentTask = head;
+  /*while (currentTask != NULL){
+    Serial.print(String(*(unsigned char *)(currentTask->taskDataPtr))+" ");
+    Serial.print(taskName[*(unsigned char *)(currentTask->taskDataPtr)]);
+    Serial.print(" ");
+    currentTask = currentTask->next;
+  }
+  Serial.println("");
+  for (int i=0; i<numTask; i++){
+    Serial.print(String(taskAddFlag[i])+" "+String(taskInQue[i])+"/");
+  }
+  Serial.println("");
+  Serial.println("  **Start Que**  ");*/
+  currentTask = head;
   while (currentTask != NULL){
     start_time = millis();
     (currentTask->myTask)(currentTask->taskDataPtr); //execute task
     taskTime[*(unsigned char *)(currentTask->taskDataPtr)] = millis() - start_time;
-    Serial.println(taskName[*(unsigned char *)(currentTask->taskDataPtr)]);
+    Serial.write(taskName[*(unsigned char *)(currentTask->taskDataPtr)].c_str());
     currentTask = currentTask->next;
   }
+  /*Serial.println("  **End Que**  ");
+  for (int i=0; i<numTask; i++){
+    Serial.print(String(taskAddFlag[i])+" "+String(taskInQue[i])+"/");
+  }
+  Serial.println("");*/
   //toggle pin after one cycle of task que
   digitalWrite(taskqueFinishPin, !digitalRead(taskqueFinishPin));
   //show execution time for each task in serial monitor
-  message = "";
+  //message = "";
   for (int i=0; i<numTask; i++)
     message += taskName[i] + ": " + taskTime[i] + " ms\n";
   Serial.write(message.c_str());
