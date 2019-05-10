@@ -116,8 +116,8 @@ void Measure_function(void *uncast_data){
       Serial1.write("1");
       while ( !Serial1.available()){}
       serialResponse = Serial1.readStringUntil('\n');
-      *(data->tempIndex) = (*(data->tempIndex) + 1 ) % 8;
-      *(data->temperatureRawBuf + *(data->tempIndex)) = serialResponse.toInt();
+      *(data->tempIndexPtrPtr) = (*(data->tempIndexPtrPtr) + 1 ) % 8;
+      *(data->temperatureRawBuf + *(data->tempIndexPtrPtr)) = serialResponse.toInt();
       break;
 
     // Pressure
@@ -139,9 +139,9 @@ void Measure_function(void *uncast_data){
         i++;
       }
 
-      *(data->bloodPressIndex) = (*(data->bloodPressIndex) + 1 ) % 4;
-      *(data->bloodPressRawBuf + *(data->bloodPressIndex) ) = value[0];
-      *(data->bloodPressRawBuf + *(data->bloodPressIndex) + 4 ) = value[1];
+      *(data->bloodPressIndexPtr) = (*(data->bloodPressIndexPtr) + 1 ) % 4;
+      *(data->bloodPressRawBuf + *(data->bloodPressIndexPtr) ) = value[0];
+      *(data->bloodPressRawBuf + *(data->bloodPressIndexPtr) + 4 ) = value[1];
       break;
 
     // Pulse rate
@@ -149,9 +149,9 @@ void Measure_function(void *uncast_data){
       Serial1.write("3");
       while ( !Serial1.available()){}
       serialResponse = Serial1.readStringUntil('\n');
-      if(abs(*(data->pulseRawBuf + *(data->pulseRateIndex)) - serialResponse.toInt())/(*(data->pulseRawBuf + *(data->pulseRateIndex))) >= 0.15){
-        *(data->pulseRateIndex) = (*(data->pulseRateIndex) + 1 ) % 8;
-        *(data->pulseRawBuf + *(data->pulseRateIndex)) = serialResponse.toInt();
+      if(abs(*(data->pulseRawBuf + *(data->pulseRateIndexPtr)) - serialResponse.toInt())/(*(data->pulseRawBuf + *(data->pulseRateIndexPtr))) >= 0.15){
+        *(data->pulseRateIndexPtr) = (*(data->pulseRateIndexPtr) + 1 ) % 8;
+        *(data->pulseRawBuf + *(data->pulseRateIndexPtr)) = serialResponse.toInt();
       }
       break;
 
@@ -169,18 +169,18 @@ void Compute_function(void *uncast_data){
   switch(*(data->measurementSelection)){
     // Temperature
     case 1:
-      *(data->tempCorrectedBuf + *(data->tempIndex)) = String(5+0.75*(*(data->temperatureRawBuf + *(data->tempIndex)))).c_str();
+      *(data->tempCorrectedBuf + *(data->tempIndexPtr)) = String(5+0.75*(*(data->temperatureRawBuf + *(data->tempIndexPtr)))).c_str();
       break;
 
     // blood pressure
     case 2:
-      *(data->bloodPressCorrectedBuf + *(data->bloodPressIndex)) = String(9+2*(*(data->bloodPressRawBuf + *(data->bloodPressIndex)))).c_str();
-      *(data->bloodPressCorrectedBuf + *(data->bloodPressIndex) + 4) = String(6+1.5*(*(data->bloodPressRawBuf + *(data->bloodPressIndex) + 4))).c_str();
+      *(data->bloodPressCorrectedBuf + *(data->bloodPressIndexPtr)) = String(9+2*(*(data->bloodPressRawBuf + *(data->bloodPressIndexPtr)))).c_str();
+      *(data->bloodPressCorrectedBuf + *(data->bloodPressIndexPtr) + 4) = String(6+1.5*(*(data->bloodPressRawBuf + *(data->bloodPressIndexPtr) + 4))).c_str();
       break;
 
     // pulse rate
     case 3:
-      *(data->prCorrectedBuf + *(data->pulseRateIndex)) = String(8+3*(*(data->pulseRateRawBuf + *(data->pulseRateIndex)))).c_str();
+      *(data->prCorrectedBuf + *(data->pulseRateIndexPtr)) = String(8+3*(*(data->pulseRateRawBuf + *(data->pulseRateIndexPtr)))).c_str();
       break;
 
     default:
@@ -193,11 +193,11 @@ void Communication_function(void *uncast_data){
   DataStructDisplay* data;
   data=(DataStructDisplay*)uncast_data;
 
-  Serial.write("Temperature:          " + String(*(data->tempCorrectedBuf + *(data->tempIndex))) + " C");
-  Serial.write("Systolic pressure:    " + String(*(data->bloodPressCorrectedBuf + *(data->bloodPressIndex))) + " mm Hg");
-  Serial.write("Diastolic pressure:   " + String(*(data->bloodPressCorrectedBuf + *(data->bloodPressIndex) + 4)) + " mm Hg");
-  Serial.write("Pulse rate:           " + String(*(data->prCorrectedBuf + *(data->pulseRateIndex))) + " BPM");
-  Serial.write("Battery:              " + String(*(data->batteryState)));
+  Serial.write("Temperature:          " + String(*(data->tempCorrectedBuf + *(data->tempIndexPtr))) + " C");
+  Serial.write("Systolic pressure:    " + String(*(data->bloodPressCorrectedBuf + *(data->bloodPressIndexPtr))) + " mm Hg");
+  Serial.write("Diastolic pressure:   " + String(*(data->bloodPressCorrectedBuf + *(data->bloodPressIndexPtr) + 4)) + " mm Hg");
+  Serial.write("Pulse rate:           " + String(*(data->prCorrectedBuf + *(data->pulseRateIndexPtr))) + " BPM");
+  Serial.write("Battery:              " + String(*(data->batteryStatePtr)));
   *(data->addFlag) = false;
 }
  
