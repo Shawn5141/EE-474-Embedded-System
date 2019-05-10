@@ -363,6 +363,7 @@ void Communications_function(void *uncast_data){
   Serial.write(" BPM\n");
   Serial.write("Battery:              ");
   Serial.write(*(data->batteryStatePtr));
+  Serial.write("\n");
 
   *(data->addFlagPtr) = false;
 }
