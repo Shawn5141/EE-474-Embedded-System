@@ -292,9 +292,9 @@ void Measure_function(void *uncast_data){
         i++;
       }
 
-      *(data->bloodPressIndexPtr) = (*(data->bloodPressIndexPtr) + 1 ) % 4;
+      *(data->bloodPressIndexPtr) = (*(data->bloodPressIndexPtr) + 1 ) % 8;
       *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) ) = value[0];
-      *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 4 ) = value[1];
+      *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8 ) = value[1];
       break;
 
     // Pulse rate
@@ -329,7 +329,7 @@ void Compute_function(void *uncast_data){
     // blood pressure
     case 2:
       *(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)) = 9+2*(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr)));
-      *(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr) + 4) = 6+1.5*(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 4));
+      *(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr) + 8) = 6+1.5*(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8));
       break;
 
     // pulse rate
@@ -361,7 +361,7 @@ void Communications_function(void *uncast_data){
   Serial.write(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
   Serial.write(" mm Hg\n");
   Serial.write("Diastolic pressure:   ");
-  Serial.write(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr) + 4));
+  Serial.write(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr) + 8));
   Serial.write(" mm Hg\n");
   Serial.write("Pulse rate:           ");
   Serial.write(*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr)));
@@ -411,12 +411,12 @@ void text_for_display(){
    if (bpOutOfRange==1){
       tft.setTextColor(ORANGE,BLACK);
       
-      //tft.print((char*)(data->bloodPressCorrectedBufPtr));
+      tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr));
       
       tft.println(" mmHg   ");}
    else{
       tft.setTextColor(GREEN,BLACK);
-      //tft.print((char*)(data->bloodPressCorrectedBufPtr));
+      tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr));
       tft.println(" mmHg   ");};
     
    tft.setTextColor(WHITE);
@@ -427,11 +427,11 @@ void text_for_display(){
    if (bpOutOfRange==1){
       tft.setTextColor(ORANGE,BLACK);
       
-      //tft.print((char*)(data->bloodPressCorrectedBufPtr+7));
+      tft.print(*(data->bloodPressCorrectedBufPtr +8+ *(data->bloodPressIndexPtr));
       tft.println(" mmHg ");}
    else{
       tft.setTextColor(GREEN,BLACK);
-      //tft.print((char*)(data->bloodPressCorrectedBufPtr+7));
+      tft.print(*(data->bloodPressCorrectedBufPtr + 8+*(data->bloodPressIndexPtr));
       tft.println(" mmHg  ");};
    
    tft.setTextColor(WHITE);
@@ -439,7 +439,7 @@ void text_for_display(){
    tft.print("Temperature:    ");
    if (tempOutOfRange==1){tft.setTextColor(ORANGE,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
-   //tft.print((char*)(data->tempCorrectedPtr));
+   tft.print(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
    tft.setTextSize(1);
    tft.print((char)223);
    tft.setTextSize(2);
@@ -451,7 +451,7 @@ void text_for_display(){
    tft.print("Pulse Rate:     ");
    if (ppulseOutOfRange==1){tft.setTextColor(ORANGE,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
-   //tft.print((char*)(data->pulseRateCorrectedBufPtr));
+   tft.print(*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr));
    tft.println(" BPM ");
 
    
@@ -460,7 +460,7 @@ void text_for_display(){
    tft.print("Battery status: ");
    if (batteryState<=20){tft.setTextColor(RED,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
-   //tft.print(*(data->batteryStatePtr));
+   tft.print(*(data->batteryStatePtr));
    tft.println("   ");
 
    tft.println();
