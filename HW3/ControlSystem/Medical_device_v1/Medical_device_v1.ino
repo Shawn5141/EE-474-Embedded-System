@@ -398,15 +398,32 @@ void WarningAlarm_function(void *uncast_data){
       tempOutOfRange=0;
     
   }
-  if (*(data->systolicPressRawPtr)>120 || *(data->diastolicPressRawPtr)<80){
+  if (*(data->bloodPressRawBufPtr)<120 || *(data->bloodPressRawBufPtr)>130){
       bpOutOfRange=1;
-      bpHigh=true;
+      if(*(data->bloodPressRawBufPtr)>130*1.2){
+      	bpHigh=true;
+      }else{
+      	bpHigh=false;
+      }
+    }else{
+      bpHigh=false;
+      bpOutOfRange=0;
+  }
+
+  if (*(data->bloodPressRawBufPtr+7)<70 || *(data->bloodPressRawBufPtr+7)>80){
+      bpOutOfRange=1;
+      if(*(data->bloodPressRawBufPtr+7)>80){
+      	bpHigh=true;
+      }else{
+      	bpHigh=false;
+      }
+      
     }else{
       bpHigh=false;
       bpOutOfRange=0;
   }
   
-  if (*(data->pulseRateRawPtr)<60 || *(data->pulseRateRawPtr)>100){
+  if (*(data->pulseRateRawBufPtr)<60 || *(data->pulseRateRawBufPtr)>100){
       pulseOutOfRange=1;
       pulseLow=true;
     }else{
