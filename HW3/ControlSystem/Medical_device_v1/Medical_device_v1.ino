@@ -183,6 +183,20 @@ void Compute_function(void *uncast_data){
 
     default:
     // nothing
+  }
+  *(data->addFlag) = false;
+}
+
+void Communication_function(void *uncast_data){
+  DataStructDisplay* data;
+  data=(DataStructDisplay*)uncast_data;
+
+  Serial.write("Temperature:          " + String(*(data->tempCorrectedBuf + *(data->tempIndex))) + " C");
+  Serial.write("Systolic pressure:    " + String(*(data->bloodPressCorrectedBuf + *(data->bloodPressIndex))) + " mm Hg");
+  Serial.write("Diastolic pressure:   " + String(*(data->bloodPressCorrectedBuf + *(data->bloodPressIndex) + 4)) + " mm Hg");
+  Serial.write("Pulse rate:           " + String(*(data->prCorrectedBuf + *(data->pulseRateIndex))) + " BPM");
+  Serial.write("Battery:              " + String(*(data->batteryState)));
+  *(data->addFlag) = false;
 }
  
 
