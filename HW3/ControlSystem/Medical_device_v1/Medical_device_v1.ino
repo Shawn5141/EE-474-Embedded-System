@@ -349,11 +349,6 @@ void Communications_function(void *uncast_data){
   DataStructDisplay* data;
   data=(DataStructDisplay*)uncast_data;
 
-//  Serial.write("Temperature:          " + String(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr))) + " C");
-//  Serial.write("Systolic pressure:    " + String(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr))) + " mm Hg");
-//  Serial.write("Diastolic pressure:   " + String(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr) + 4)) + " mm Hg");
-//  Serial.write("Pulse rate:           " + String(*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr))) + " BPM");
-//  Serial.write("Battery:              " + String(*(data->batteryStatePtr)));
   Serial.write("Temperature:          ");
   Serial.write(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
   Serial.write(" C\n");
@@ -368,6 +363,8 @@ void Communications_function(void *uncast_data){
   Serial.write(" BPM\n");
   Serial.write("Battery:              ");
   Serial.write(*(data->batteryStatePtr));
+
+  *(data->addFlagPtr) = false;
 }
  
 /*Helper function*/
@@ -689,6 +686,7 @@ void WarningAlarm_function(void *uncast_data){
   }
   if (*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))<120 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130){
       bpOutOfRange=1;
+      *(data->addComFlagPtr) = true;
       if(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130*1.2){
         *(data->alarmAcknowledgePtr) ++;
         bpHigh=true;
@@ -718,6 +716,7 @@ void WarningAlarm_function(void *uncast_data){
       pulseOutOfRange=0;
     
   }
+  *(data->addFlagPtr) = false;
 }
 
 
@@ -752,6 +751,8 @@ void Status_function(void *uncast_data){
     //}
 
   *(data->batteryStatePtr)=value;
+
+  *(data->addFlagPtr) = false;
 }
 
 
