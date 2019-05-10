@@ -109,43 +109,80 @@ void Measure_function(void *uncast_data){
   DataStructMeasure* data;
   data = (DataStructMeasure*)uncast_data;
   String  serialResponse;
-  Serial1.write("1");
-  int value[4];
-  
-  while ( !Serial1.available()){}
-  serialResponse = Serial1.readStringUntil('\n');
 
-  // Convert from String Object to String.
-  char buf[serialResponse.length()+1];
-  serialResponse.toCharArray(buf, sizeof(buf));
-  char *p = buf;
-  char *str;
-  int i = 0;
-  String cast_str;
-  while ((str = strtok_r(p, " ", &p)) != NULL) // delimiter is the semicolon
-  {  
-    cast_str=(String)str;
-    value[i] = cast_str.toInt();
-    i++;
+  switch(*(data->measurementSelection)){
+    // Temperature
+    case 1:
+      Serial1.write("1");
+      while ( !Serial1.available()){}
+      serialResponse = Serial1.readStringUntil('\n');
+      *(data->tempIndex) = (*(data->tempIndex) + 1 ) % 8;
+      *(data->temperatureRawBuf + *(data->tempIndex)) = serialResponse.toInt();
+      break;
+
+    // Pressure
+    case 2:
+      Serial1.write("2");
+      while ( !Serial1.available()){}
+      serialResponse = Serial1.readStringUntil('\n');
+      char buf[serialResponse.length()+1];
+      serialResponse.toCharArray(buf, sizeof(buf));
+      char *p = buf;
+      char *str;
+      int i = 0;
+      String cast_str;
+      int value[2];
+      while ((str = strtok_r(p, " ", &p)) != NULL) // delimiter is the semicolon
+      {  
+        cast_str=(String)str;
+        value[i] = cast_str.toInt();
+        i++;
+      }
+
+      *(data->bloodPressIndex) = (*(data->bloodPressIndex) + 1 ) % 4;
+      *(data->bloodPressRawBuf + *(data->bloodPressIndex) ) = value[0];
+      *(data->bloodPressRawBuf + *(data->bloodPressIndex) + 4 ) = value[1];
+      break;
+
+    // Pulse rate
+    case 3:
+      Serial1.write("3");
+      while ( !Serial1.available()){}
+      serialResponse = Serial1.readStringUntil('\n');
+      *(data->pulseRateIndex) = (*(data->pulseRateIndex) + 1 ) % 8;
+      *(data->pulseRawBuf + *(data->pulseRateIndex)) = serialResponse.toInt();
+      break;
+
+    default:
+      // nothing
   }
-  //for(int j=0; j<4; j++) {
-    //Serial.print("This is Measure value");
-    //Serial.println(value[j]);
-  //};
-  
- *(data->temperatureRawPtr)=value[0];
-  *(data->systolicPressRawPtr)=value[1];
-  *(data->diastolicPressRawPtr)=value[2];
-  *(data->pulseRateRawPtr)=value[3];
+
+  *(data->addFlag) = false;
 }
 
 void Compute_function(void *uncast_data){
   DataStructCompute* data;
   data = (DataStructCompute *)uncast_data;
-  sprintf((char*)data->tempCorrectedPtr, "%s", String(5+0.75*(*(data->temperatureRawPtr))).c_str());
-  sprintf((char*)data->systolicPressCorrectedPtr, "%s", String(9+2*(*(data->systolicPressRawPtr))).c_str());
-  sprintf((char*)data->diastolicPressCorrectedPtr, "%s", String(6+1.5*(*(data->diastolicPressRawPtr))).c_str()); 
-  sprintf((char*)data->pulseRateCorrectedPtr, "%s", String(8+3*(*(data->pulseRateRawPtr))).c_str());
+
+  switch(*(data->measurementSelection)){
+    // Temperature
+    case 1:
+      *(data->tempCorrectedBuf + *(data->tempIndex)) = String(5+0.75*(*(data->temperatureRawBuf + *(data->tempIndex)))).c_str();
+      break;
+
+    // blood pressure
+    case 2:
+      *(data->bloodPressCorrectedBuf + *(data->bloodPressIndex)) = String(9+2*(*(data->bloodPressRawBuf + *(data->bloodPressIndex)))).c_str();
+      *(data->bloodPressCorrectedBuf + *(data->bloodPressIndex) + 4) = String(6+1.5*(*(data->bloodPressRawBuf + *(data->bloodPressIndex) + 4))).c_str();
+      break;
+
+    // pulse rate
+    case 3:
+      *(data->prCorrectedBuf + *(data->pulseRateIndex)) = String(8+3*(*(data->pulseRateRawBuf + *(data->pulseRateIndex)))).c_str();
+      break;
+
+    default:
+    // nothing
 }
  
 
@@ -256,7 +293,7 @@ void Status_function(void *uncast_data){
   DataStructStatus* data;
   int value;
   data=(DataStructStatus *)uncast_data;
-  Serial1.write("2");
+  Serial1.write("4");
   
   while( !Serial1.available()) {}
   serialResponse = Serial1.readStringUntil('\n');

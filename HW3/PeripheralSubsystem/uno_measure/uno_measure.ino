@@ -35,19 +35,22 @@ void loop(){
 
     // if receive 1, return measurement
     if( whichTask == "1" ){  
-        measureData = "";
-        measureData += String(get_temperatureRaw());
-        measureData += " ";
-        measureData += String(get_systolicPressRaw());
+        measureData = String(get_temperatureRaw());
+        Serial.println(measureData);
+    }
+    else if( whichTask == "2" ){
+        measureData = String(get_systolicPressRaw());
         measureData += " ";
         measureData += String(get_diastolicPressRaw());
-        measureData += " ";
-        measureData += String(get_pulseRateRaw());
+        Serial.println(measureData);
+    }
+    else if( whichTask == "3" ){
+        measureData = String(get_pulseRateRaw());
         Serial.println(measureData);
     }
 
-    // if receive 2, return battery status
-    else if( whichTask == "2" ){
+    // if receive 4, return battery status
+    else if( whichTask == "4" ){
         measureData = String(get_batteryStatus());
         Serial.println(measureData);
     }
