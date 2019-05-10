@@ -1,15 +1,10 @@
 #include <Elegoo_GFX.h>    // Core graphics library
 #include <Elegoo_TFTLCD.h> // Hardware-specific library
-
-// The control pins for the LCD can be assigned to any digital or
-// analog pins...but we'll use the analog pins as this allows us to
-// double up the pins with the touch screen (see the TFT paint example).
-#define LCD_CS A3 // Chip Select goes to Analog 3
-#define LCD_CD A2 // Command/Data goes to Analog 2
-#define LCD_WR A1 // LCD Write goes to Analog 1
-#define LCD_RD A0 // LCD Read goes to Analog 0
-
-#define LCD_RESET A4 // Can alternately just connect to Arduino's reset pin
+#include <TouchScreen.h>
+#if defined(__SAM3X8E__)
+    #undef __FlashStringHelper::F(string_literal)
+    #define F(string_literal) string_literal
+#endif
 
 // When using the BREAKOUT BOARD only, use these 8 data lines to the LCD:
 // For the Arduino Uno, Duemilanove, Diecimila, etc.:
@@ -21,8 +16,64 @@
 //   D5 connects to digital pin 5
 //   D6 connects to digital pin 6
 //   D7 connects to digital pin 7
+
 // For the Arduino Mega, use digital pins 22 through 29
 // (on the 2-row header at the end of the board).
+//   D0 connects to digital pin 22
+//   D1 connects to digital pin 23
+//   D2 connects to digital pin 24
+//   D3 connects to digital pin 25
+//   D4 connects to digital pin 26
+//   D5 connects to digital pin 27
+//   D6 connects to digital pin 28
+//   D7 connects to digital pin 29
+
+// For the Arduino Due, use digital pins 33 through 40
+// (on the 2-row header at the end of the board).
+//   D0 connects to digital pin 33
+//   D1 connects to digital pin 34
+//   D2 connects to digital pin 35
+//   D3 connects to digital pin 36
+//   D4 connects to digital pin 37
+//   D5 connects to digital pin 38
+//   D6 connects to digital pin 39
+//   D7 connects to digital pin 40
+/*
+#define YP 9  // must be an analog pin, use "An" notation!
+#define XM 8  // must be an analog pin, use "An" notation!
+#define YM A2   // can be a digital pin
+#define XP A3   // can be a digital pin
+*/
+
+#define YP A3  // must be an analog pin, use "An" notation!
+#define XM A2  // must be an analog pin, use "An" notation!
+#define YM 9   // can be a digital pin
+#define XP 8   // can be a digital pin
+/*
+#define TS_MINX 50
+#define TS_MAXX 920
+
+#define TS_MINY 100
+#define TS_MAXY 940
+*/
+//Touch For New ILI9341 TP
+#define TS_MINX 120
+#define TS_MAXX 900
+
+#define TS_MINY 70
+#define TS_MAXY 920
+
+// For better pressure precision, we need to know the resistance
+// between X+ and X- Use any multimeter to read it
+// For the one we're using, its 300 ohms across the X plate
+TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
+
+#define LCD_CS A3
+#define LCD_CD A2
+#define LCD_WR A1
+#define LCD_RD A0
+// optional
+#define LCD_RESET A4
 
 // Assign human-readable names to some common 16-bit color values:
 #define  BLACK   0x0000
@@ -33,12 +84,16 @@
 #define MAGENTA 0xF81F
 #define YELLOW  0xFFE0
 #define WHITE   0xFFFF
+#define ORANGE 0xFC00 
+#define W 80
+#define H 40
+#define PENRADIUS 3
+#define Measure_Select_height 40
+#define Measure_Select_width 80
+#define MINPRESSURE 10
+#define MAXPRESSURE 1000
 
 Elegoo_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
-// If using the shield, all control and data lines are fixed, and
-// a simpler declaration can optionally be used:
-// Elegoo_TFTLCD tft;
-
 
 /*Shared varibles*/
 //Measurements
@@ -315,12 +370,37 @@ void Communications_function(void *uncast_data){
   Serial.write(*(data->batteryStatePtr));
 }
  
+/*Helper function*/
 
-void Display_function(void *uncast_data){
-  DataStructDisplay* data;
-  data=(DataStructDisplay*)uncast_data;
+void bar_text(){
    tft.setRotation(1);
-   tft.setCursor(0, 30);
+   tft.setCursor(10, 10);
+   tft.setTextSize(2);
+   tft.setTextColor(WHITE,RED);
+   tft.println("Menu");
+   tft.setCursor(90, 10);
+   tft.setTextColor(WHITE,GREEN);
+   tft.print("Ann.");
+   tft.setRotation(2);
+  }
+
+void Measure_text(){
+   tft.setRotation(1);
+   tft.setCursor(10, 60);
+   tft.setTextSize(2);
+   tft.setTextColor(WHITE,CYAN);
+   tft.println("Boold");
+   tft.setCursor(10, 100);
+   tft.print("Temp.");
+   tft.setCursor(10, 140);
+   tft.print("Pulse");
+   tft.setRotation(2);
+  }
+
+
+void text_for_display(){
+   tft.setRotation(1);
+   tft.setCursor(0, 60);
    tft.setTextSize(2);
    tft.setTextColor(WHITE);
    tft.println("Blood Pressure: ");
@@ -328,15 +408,15 @@ void Display_function(void *uncast_data){
    tft.println("        ");
    tft.setTextSize(2);
    tft.print(" Systolic : ");
-   if (bpHigh==true){
-      tft.setTextColor(RED,BLACK);
+   if (bpOutOfRange==1){
+      tft.setTextColor(ORANGE,BLACK);
       
-      tft.print((char*)(data->systolicPressCorrectedPtr));
+      //tft.print((char*)(data->bloodPressCorrectedBufPtr));
       
       tft.println(" mmHg   ");}
    else{
       tft.setTextColor(GREEN,BLACK);
-      tft.print((char*)(data->systolicPressCorrectedPtr));
+      //tft.print((char*)(data->bloodPressCorrectedBufPtr));
       tft.println(" mmHg   ");};
     
    tft.setTextColor(WHITE);
@@ -344,22 +424,22 @@ void Display_function(void *uncast_data){
    tft.println("        ");
    tft.setTextSize(2);
    tft.print(" Diastolic :");
-   if (pulseLow==true){
-      tft.setTextColor(RED,BLACK);
+   if (bpOutOfRange==1){
+      tft.setTextColor(ORANGE,BLACK);
       
-      tft.print((char*)(data->diastolicPressCorrectedPtr));
+      //tft.print((char*)(data->bloodPressCorrectedBufPtr+7));
       tft.println(" mmHg ");}
    else{
       tft.setTextColor(GREEN,BLACK);
-      tft.print((char*)(data->diastolicPressCorrectedPtr));
+      //tft.print((char*)(data->bloodPressCorrectedBufPtr+7));
       tft.println(" mmHg  ");};
    
    tft.setTextColor(WHITE);
    tft.println("        ");
    tft.print("Temperature:    ");
-   if (tempHigh==true){tft.setTextColor(RED,BLACK);}
+   if (tempOutOfRange==1){tft.setTextColor(ORANGE,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
-   tft.print((char*)(data->tempCorrectedPtr));
+   //tft.print((char*)(data->tempCorrectedPtr));
    tft.setTextSize(1);
    tft.print((char)223);
    tft.setTextSize(2);
@@ -369,9 +449,9 @@ void Display_function(void *uncast_data){
    tft.setTextColor(WHITE);
    tft.println("        ");
    tft.print("Pulse Rate:     ");
-   if (pulseLow==true){tft.setTextColor(RED,BLACK);}
+   if (ppulseOutOfRange==1){tft.setTextColor(ORANGE,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
-   tft.print((char*)(data->pulseRateCorrectedPtr));
+   //tft.print((char*)(data->pulseRateCorrectedBufPtr));
    tft.println(" BPM ");
 
    
@@ -380,12 +460,221 @@ void Display_function(void *uncast_data){
    tft.print("Battery status: ");
    if (batteryState<=20){tft.setTextColor(RED,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
-   tft.print(*(data->batteryStatePtr));
+   //tft.print(*(data->batteryStatePtr));
    tft.println("   ");
 
    tft.println();
    tft.println();
+   tft.setRotation(2);
+
+ 
 }
+
+void Display_function(void *uncast_data){
+  DataStructDisplay* data;
+  data=(DataStructDisplay*)uncast_data;
+
+  bar_text();
+  Serial.println(Function_Select);
+  Serial.println(Measure_Select);
+  
+
+  
+  if (Function_Select==0 )  {
+    //Ann Select diagram
+    if (initial_val_Ann==0){
+    tft.setRotation(2);
+    //tft.fillRect(0,320-2*W, H, W, GREEN);
+    tft.fillRect(H+5,0, tft.width(),tft.height(), BLACK);
+    initial_val_Menu=0;
+    bar_text();
+    text_for_display();
+    initial_val_Ann=1;
+    }else{
+    bar_text();
+    text_for_display();
+      
+      }
+
+    //Todo the acknoledge block
+    
+    Serial.println("display screen");
+    
+  }else{
+
+
+    tft.setRotation(2);
+    tft.drawRect(0,320-3*W, H, W, WHITE);
+    for(int i=0; i<10000;i++){};
+    //tft.drawRect(0,320-W, H, W, GREEN);
+    
+    if(Measure_Select==1){
+      
+      //Menu Select diagram
+
+     
+      tft.drawRect(H+5,320-W+5, 1*H-5, W-5, WHITE);
+      tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+
+      
+    }else if(Measure_Select==2){
+      
+      //Menu Select diagram
+      tft.drawRect(H+5,320-W+5, 2*H-5, W-5,  WHITE);
+      tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+      
+    }else if(Measure_Select==3){
+
+      //Menu Select diagram
+      tft.drawRect(H+5,320-W+5, 3*H-5, W-5, WHITE);
+      tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
+      
+
+    }else {
+      
+      if (initial_val_Menu==0){
+      //tft.fillRect(0,320-2*W, H, W, GREEN);
+      tft.fillRect(H+5,0, tft.width(),tft.height()-W, BLACK);
+      tft.fillRect(4*H+5,0, tft.width(),tft.height(), BLACK);
+      tft.fillRect(H+5,320-W, 1*H, W, CYAN);
+      tft.fillRect(H+5,320-W, 2*H, W, CYAN);
+      tft.fillRect(H+5,320-W, 3*H, W, CYAN);
+      tft.drawRect(H+5,320-W, 1*H, W, WHITE);
+      tft.drawRect(H+5,320-W, 2*H, W,  WHITE);
+      tft.drawRect(H+5,320-W, 3*H, W, WHITE);
+      bar_text();
+      Measure_text();
+      initial_val_Menu=1;
+      
+      }else{
+        
+        Measure_text();
+       }
+    
+      
+      //text_for_display();
+
+      }
+      initial_val_Ann=0;
+      
+    
+    
+
+
+  }  
+
+}
+
+void TFTKeypad(void *uncast_data){
+
+  data = ( DataStructTFTKeypad *)data;
+  data=(DataStructTFTKeypad*)uncast_data;
+  unsigned long start_time=millis();
+  
+  unsigned long count=0;
+  while (count<500){
+  digitalWrite(13, HIGH);
+    TSPoint p = ts.getPoint();
+    digitalWrite(13, LOW);
+
+  // if sharing pins, you'll need to fix the directions of the touchscreen pins
+  //pinMode(XP, OUTPUT);
+    pinMode(XM, OUTPUT);
+    pinMode(YP, OUTPUT);
+  //pinMode(YM, OUTPUT);
+
+  // we have some minimum pressure we consider 'valid'
+  // pressure of 0 means no pressing!
+
+  
+  
+  if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
+    
+
+    if (p.y < (TS_MINY-5)) {
+      Serial.println("erase");
+      // press the bottom of the screen to erase 
+      tft.fillRect(0, W, tft.width(), tft.height()-W, BLACK);
+    }
+    
+    p.x = map(p.x, TS_MINX, TS_MAXX, tft.width(), 0);
+    p.y = (tft.height()-map(p.y, TS_MINY, TS_MAXY, tft.height(), 0));
+    
+    Serial.print("("); Serial.print(p.x);
+    Serial.print(", "); Serial.print(p.y);
+    Serial.println(")");
+
+
+
+
+    tft.setRotation(2);
+   
+      if (p.x < H) {
+         oldcolor = currentcolor;
+
+         if (p.y < W) { 
+           //currentcolor = WHITE;
+           tft.drawRect(0, 0, H, W, WHITE);
+           Function_Select=-1;
+         } else if (p.y < W*2) {
+           //currentcolor = BLUE;
+           
+           tft.drawRect(0, W, H, W, WHITE);
+           Function_Select=-1;
+         } else if (p.y < W*3) {
+           //currentcolor = GREEN;
+           tft.drawRect( 0,W*2, H, W, WHITE);
+           //*(data->Function_SelectPtr)=0;
+           Function_Select=0;
+         
+         } else if (p.y < W*4) {
+           //currentcolor = RED;
+           tft.drawRect( 0,W*3, H, W, WHITE);
+           //*(data->Function_SelectPtr)=1;
+           Function_Select=1;
+         }
+  
+      }
+      
+
+      if((Function_Select)==0){
+        for(int i=0;i<10000;i++){}
+        if (p.x>H && p.x < 2*H && p.y> 2*W && p.y<3*W) {
+          *(data->Alarm_AcknowledgePtr)=1;
+         
+        }
+
+      }else if (p.y > tft.height()- Measure_Select_width){
+        if (p.x>H && p.x<Measure_Select_height+H){
+          *(data->Measure_SelectPtr)=1;
+          
+        }else if (p.x>H+Measure_Select_height && p.x<2*Measure_Select_height+H){
+          *(data->Measure_SelectPtr)=2;
+          
+          
+        }else if(p.x>H+2*Measure_Select_height && p.x<3*Measure_Select_height+H){
+          *(data->Measure_SelectPtr)=3;
+          
+        }else if(p.x<H){
+           *(data->Measure_SelectPtr)=0;
+          
+          }
+
+      }   
+    }
+
+
+  unsigned long end_time=millis();
+  count=end_time-start_time;
+  //Serial.print("count");
+  //Serial.println(count);
+  }
+
+}
+
 
 void WarningAlarm_function(void *uncast_data){
   DataStructWarningAlarm * data;
@@ -467,9 +756,7 @@ void Status_function(void *uncast_data){
   *(data->batteryStatePtr)=value;
 }
 
-void TFTKeypad_function(void *uncast){
-  
-}
+
 
 void setup() {
 
@@ -592,15 +879,10 @@ void setup() {
 
   //Initialized for TFT
   Serial.println(F("TFT LCD test"));
-  #ifdef USE_Elegoo_SHIELD_PINOUT
-  Serial.println(F("Using Elegoo 2.4\" TFT Arduino Shield Pinout"));
-  #else
-  Serial.println(F("Using Elegoo 2.4\" TFT Breakout Board Pinout"));
-  #endif
-  Serial.print("TFT size is "); Serial.print(tft.width()); Serial.print("x"); Serial.println(tft.height());
   tft.reset();
-   uint16_t identifier = tft.readID();
-   if(identifier == 0x9325) {
+  
+  uint16_t identifier = tft.readID();
+  if(identifier == 0x9325) {
     Serial.println(F("Found ILI9325 LCD driver"));
   } else if(identifier == 0x9328) {
     Serial.println(F("Found ILI9328 LCD driver"));
@@ -616,13 +898,7 @@ void setup() {
   {     
       identifier=0x9341;
        Serial.println(F("Found 0x9341 LCD driver"));
-  }
-  else if(identifier==0x1111)
-  {     
-      identifier=0x9328;
-       Serial.println(F("Found 0x9328 LCD driver"));
-  }
-  else {
+  }else {
     Serial.print(F("Unknown LCD driver chip: "));
     Serial.println(identifier, HEX);
     Serial.println(F("If using the Elegoo 2.8\" TFT Arduino shield, the line:"));
@@ -631,11 +907,27 @@ void setup() {
     Serial.println(F("If using the breakout board, it should NOT be #defined!"));
     Serial.println(F("Also if using the breakout, double-check that all wiring"));
     Serial.println(F("matches the tutorial."));
-    identifier=0x9328;
-  
+    identifier=0x9341;
+   
   }
+
   tft.begin(identifier);
+  tft.setRotation(2);
+
   tft.fillScreen(BLACK);
+
+  tft.fillRect(0, 320-W, H, W, RED);
+  //tft.fillRect(W, 0, W, W, YELLOW);
+  tft.fillRect( 0,320-2*W, H, W, GREEN);
+  //tft.fillRect(W*3, 0, W, W, CYAN);
+  tft.fillRect(0,320-3*W, H, W, BLUE);
+  //tft.fillRect(W*5, 0, W, W, MAGENTA);
+  tft.fillRect(0,320-4*W, H, W, WHITE);
+ 
+  tft.drawRect(0, 0, H, W, WHITE);
+  currentcolor = RED;
+ 
+  pinMode(13, OUTPUT);
 }
 
 /*Scheduler*/
