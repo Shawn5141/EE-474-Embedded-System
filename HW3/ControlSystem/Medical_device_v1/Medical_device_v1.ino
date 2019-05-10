@@ -398,7 +398,7 @@ void Measure_text(){
   }
 
 
-void text_for_display(){
+void text_for_display(DataStructDisplay* data){
    tft.setRotation(1);
    tft.setCursor(0, 60);
    tft.setTextSize(2);
@@ -411,12 +411,12 @@ void text_for_display(){
    if (bpOutOfRange==1){
       tft.setTextColor(ORANGE,BLACK);
       
-      tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr));
+      tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
       
       tft.println(" mmHg   ");}
    else{
       tft.setTextColor(GREEN,BLACK);
-      tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr));
+      tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
       tft.println(" mmHg   ");};
     
    tft.setTextColor(WHITE);
@@ -427,11 +427,11 @@ void text_for_display(){
    if (bpOutOfRange==1){
       tft.setTextColor(ORANGE,BLACK);
       
-      tft.print(*(data->bloodPressCorrectedBufPtr +8+ *(data->bloodPressIndexPtr));
+      tft.print(*(data->bloodPressCorrectedBufPtr +8+ *(data->bloodPressIndexPtr)));
       tft.println(" mmHg ");}
    else{
       tft.setTextColor(GREEN,BLACK);
-      tft.print(*(data->bloodPressCorrectedBufPtr + 8+*(data->bloodPressIndexPtr));
+      tft.print(*(data->bloodPressCorrectedBufPtr + 8+*(data->bloodPressIndexPtr)));
       tft.println(" mmHg  ");};
    
    tft.setTextColor(WHITE);
@@ -449,9 +449,9 @@ void text_for_display(){
    tft.setTextColor(WHITE);
    tft.println("        ");
    tft.print("Pulse Rate:     ");
-   if (ppulseOutOfRange==1){tft.setTextColor(ORANGE,BLACK);}
+   if (pulseOutOfRange==1){tft.setTextColor(ORANGE,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
-   tft.print(*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr));
+   tft.print(*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr)));
    tft.println(" BPM ");
 
    
@@ -475,24 +475,21 @@ void Display_function(void *uncast_data){
   data=(DataStructDisplay*)uncast_data;
 
   bar_text();
-  Serial.println(Function_Select);
-  Serial.println(Measure_Select);
-  
 
   
-  if (Function_Select==0 )  {
+  if (*(data->functionSelectPtr)==0 )  {
     //Ann Select diagram
-    if (initial_val_Ann==0){
+    if (*(data->initial_val_AnnPtr)==0){
     tft.setRotation(2);
     //tft.fillRect(0,320-2*W, H, W, GREEN);
     tft.fillRect(H+5,0, tft.width(),tft.height(), BLACK);
-    initial_val_Menu=0;
+    *(data->initial_val_menuPtr)=0;
     bar_text();
-    text_for_display();
-    initial_val_Ann=1;
+    text_for_display(data);
+    *(data->initial_val_AnnPtr)=1;
     }else{
     bar_text();
-    text_for_display();
+    text_for_display(data);
       
       }
 
@@ -508,7 +505,7 @@ void Display_function(void *uncast_data){
     for(int i=0; i<10000;i++){};
     //tft.drawRect(0,320-W, H, W, GREEN);
     
-    if(Measure_Select==1){
+    if(*(data->measurementSelectionPtr)==1){
       
       //Menu Select diagram
 
@@ -518,14 +515,14 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
 
       
-    }else if(Measure_Select==2){
+    }else if(*(data->measurementSelectionPtr)==2){
       
       //Menu Select diagram
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5,  WHITE);
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
       
-    }else if(Measure_Select==3){
+    }else if(*(data->measurementSelectionPtr)==3){
 
       //Menu Select diagram
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, WHITE);
@@ -534,8 +531,12 @@ void Display_function(void *uncast_data){
       
 
     }else {
+
+
+     
+
       
-      if (initial_val_Menu==0){
+      if (*(data->initial_val_menuPtr)==0){
       //tft.fillRect(0,320-2*W, H, W, GREEN);
       tft.fillRect(H+5,0, tft.width(),tft.height()-W, BLACK);
       tft.fillRect(4*H+5,0, tft.width(),tft.height(), BLACK);
@@ -547,7 +548,7 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W, 3*H, W, WHITE);
       bar_text();
       Measure_text();
-      initial_val_Menu=1;
+      *(data->initial_val_menuPtr)=1;
       
       }else{
         
@@ -568,9 +569,9 @@ void Display_function(void *uncast_data){
 
 }
 
-void TFTKeypad(void *uncast_data){
+void TFTKeypad_function(void *uncast_data){
 
-  data = ( DataStructTFTKeypad *)data;
+  DataStructTFTKeypad * data;
   data=(DataStructTFTKeypad*)uncast_data;
   unsigned long start_time=millis();
   
@@ -613,53 +614,52 @@ void TFTKeypad(void *uncast_data){
     tft.setRotation(2);
    
       if (p.x < H) {
-         oldcolor = currentcolor;
-
+    
          if (p.y < W) { 
            //currentcolor = WHITE;
            tft.drawRect(0, 0, H, W, WHITE);
-           Function_Select=-1;
+           *(data->functionSelectPtr)=-1;
          } else if (p.y < W*2) {
            //currentcolor = BLUE;
            
            tft.drawRect(0, W, H, W, WHITE);
-           Function_Select=-1;
+           *(data->functionSelectPtr)=-1;
          } else if (p.y < W*3) {
            //currentcolor = GREEN;
            tft.drawRect( 0,W*2, H, W, WHITE);
            //*(data->Function_SelectPtr)=0;
-           Function_Select=0;
+           *(data->functionSelectPtr)=0;
          
          } else if (p.y < W*4) {
            //currentcolor = RED;
            tft.drawRect( 0,W*3, H, W, WHITE);
            //*(data->Function_SelectPtr)=1;
-           Function_Select=1;
+           *(data->functionSelectPtr)=1;
          }
   
       }
       
 
-      if((Function_Select)==0){
+      if(*(data->functionSelectPtr)==0){
         for(int i=0;i<10000;i++){}
         if (p.x>H && p.x < 2*H && p.y> 2*W && p.y<3*W) {
-          *(data->Alarm_AcknowledgePtr)=1;
+          *(data->alarmAcknowledgePtr)=1;
          
         }
 
       }else if (p.y > tft.height()- Measure_Select_width){
         if (p.x>H && p.x<Measure_Select_height+H){
-          *(data->Measure_SelectPtr)=1;
+          *(data->measurementSelectionPtr)=1;
           
         }else if (p.x>H+Measure_Select_height && p.x<2*Measure_Select_height+H){
-          *(data->Measure_SelectPtr)=2;
+          *(data->measurementSelectionPtr)=2;
           
           
         }else if(p.x>H+2*Measure_Select_height && p.x<3*Measure_Select_height+H){
-          *(data->Measure_SelectPtr)=3;
+          *(data->measurementSelectionPtr)=3;
           
         }else if(p.x<H){
-           *(data->Measure_SelectPtr)=0;
+           *(data->measurementSelectionPtr)=0;
           
           }
 
@@ -923,8 +923,7 @@ void setup() {
   tft.fillRect(0,320-4*W, H, W, WHITE);
  
   tft.drawRect(0, 0, H, W, WHITE);
-  currentcolor = RED;
- 
+  
   pinMode(13, OUTPUT);
 }
 
