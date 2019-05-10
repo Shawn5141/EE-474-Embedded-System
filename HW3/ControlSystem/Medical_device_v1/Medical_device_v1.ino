@@ -159,7 +159,7 @@ void Measure_function(void *uncast_data){
       // nothing
   }
 
-  *(data->addFlag) = false;
+  *(data->addFlagPtr) = false;
 }
 
 void Compute_function(void *uncast_data){
@@ -186,7 +186,7 @@ void Compute_function(void *uncast_data){
     default:
     // nothing
   }
-  *(data->addFlag) = false;
+  *(data->addFlagPtr) = false;
 }
 
 void Communication_function(void *uncast_data){
@@ -198,7 +198,7 @@ void Communication_function(void *uncast_data){
   Serial.write("Diastolic pressure:   " + String(*(data->bloodPressCorrectedBuf + *(data->bloodPressIndexPtr) + 4)) + " mm Hg");
   Serial.write("Pulse rate:           " + String(*(data->prCorrectedBuf + *(data->pulseRateIndexPtr))) + " BPM");
   Serial.write("Battery:              " + String(*(data->batteryStatePtr)));
-  *(data->addFlag) = false;
+  *(data->addFlagPtr) = false;
 }
  
 
