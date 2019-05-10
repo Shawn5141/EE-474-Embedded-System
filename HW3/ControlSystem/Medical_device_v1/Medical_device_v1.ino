@@ -149,8 +149,10 @@ void Measure_function(void *uncast_data){
       Serial1.write("3");
       while ( !Serial1.available()){}
       serialResponse = Serial1.readStringUntil('\n');
-      *(data->pulseRateIndex) = (*(data->pulseRateIndex) + 1 ) % 8;
-      *(data->pulseRawBuf + *(data->pulseRateIndex)) = serialResponse.toInt();
+      if(abs(*(data->pulseRawBuf + *(data->pulseRateIndex)) - serialResponse.toInt())/(*(data->pulseRawBuf + *(data->pulseRateIndex))) >= 0.15){
+        *(data->pulseRateIndex) = (*(data->pulseRateIndex) + 1 ) % 8;
+        *(data->pulseRawBuf + *(data->pulseRateIndex)) = serialResponse.toInt();
+      }
       break;
 
     default:
