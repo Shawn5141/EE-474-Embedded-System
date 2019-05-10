@@ -964,6 +964,7 @@ void loop() {
     start_time = millis();
     (currentTask->myTask)(currentTask->taskDataPtr); //execute task
     taskTime[*(unsigned char *)(currentTask->taskDataPtr)] = millis() - start_time;
+    Serial.println(taskName[*(unsigned char *)(currentTask->taskDataPtr)]);
     currentTask = currentTask->next;
   }
   //toggle pin after one cycle of task que
