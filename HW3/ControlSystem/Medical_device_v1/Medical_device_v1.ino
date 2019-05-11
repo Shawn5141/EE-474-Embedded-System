@@ -484,7 +484,7 @@ void text_for_display(DataStructDisplay* data){
    tft.setTextColor(WHITE);
    tft.println("        ");
    tft.print("Battery status: ");
-   if (batteryState<=20){tft.setTextColor(RED,BLACK);}
+   if (batteryState<=40){tft.setTextColor(ORANGE,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
    tft.print(*(data->batteryStatePtr));
    tft.println("   ");
@@ -539,6 +539,7 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, WHITE);
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+      Measure_text();
       Measure_text1();
 
       
@@ -548,6 +549,7 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5,  WHITE);
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+      Measure_text();
       Measure_text2();
       
     }else if(*(data->measurementSelectionPtr)==3){
@@ -556,6 +558,7 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, WHITE);
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
+      Measure_text();
       Measure_text3();
       
 
@@ -605,7 +608,7 @@ void TFTKeypad_function(void *uncast_data){
   unsigned long start_time=millis();
   
   unsigned long count=0;
-  while (count<500){
+  while (count<800){
   digitalWrite(13, HIGH);
     TSPoint p = ts.getPoint();
     digitalWrite(13, LOW);
@@ -658,12 +661,12 @@ void TFTKeypad_function(void *uncast_data){
            //*(data->Function_SelectPtr)=1;
            *(data->functionSelectPtr)=1;
          }
-  
+         
       }
       
 
       if(*(data->functionSelectPtr)==0){
-        for(int i=0;i<10000;i++){}
+        
         if (p.x>H && p.x < 2*H && p.y> 2*W && p.y<3*W) {
           *(data->alarmAcknowledgePtr)=1;
          
@@ -684,6 +687,7 @@ void TFTKeypad_function(void *uncast_data){
            *(data->measurementSelectionPtr)=0;
           
           }
+          
 
       }   
     }
@@ -898,8 +902,10 @@ void setup() {
   digitalWrite(taskqueFinishPin, LOW);
 
   //Initialized serial port 0 & 1
-  Serial.begin(9600);
-  Serial1.begin(9600);
+  Serial.begin(2000000);
+  Serial1.begin(2000000);
+  Serial.setTimeout(50);
+  Serial1.setTimeout(50);
 
   //Initialized for TFT
   Serial.println(F("TFT LCD test"));
@@ -958,7 +964,7 @@ void loop() {
   for (int i=0; i<numTask; i++)
     taskTime[i] = 0;
   for (int i=0; i<4; i++){
-    if (!mAvailable[i] && (millis() - mStart_time[i] >= 1000))
+    if (!mAvailable[i] && (millis() - mStart_time[i] >= 5000))
       mAvailable[i] = true;
   }
   if (mAvailable[3]){
