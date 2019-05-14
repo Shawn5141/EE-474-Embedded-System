@@ -134,7 +134,7 @@ bool taskInQue[numTask]={false};
 /*Scheduler data*/
 String message; //message of task time
 #define taskqueFinishPin 30 //pin to be toggled after one cycle of task que
-unsigned long mStart_time[4]; //the start time of each measurement
+unsigned long mStart_time[4]={0,0,0,0}; //the start time of each measurement
 bool mAvailable[4]={true,true,true,true}; //availibility of each measurement
 unsigned long start_time; //the start time of each task
 unsigned long taskTime[numTask]; //store the execution time of each task
@@ -246,7 +246,6 @@ void Delete(TCB* node){
         node->next->prev=node->prev;
         
     }
-    free(node);
     return;
 
 
@@ -267,7 +266,7 @@ void Measure_function(void *uncast_data){
 
   switch(*(data->measurementSelectionPtr)){
     // Temperature
-    case 1:
+    case 2:
       Serial1.write("1");
       while ( !Serial1.available()){}
       serialResponse = Serial1.readStringUntil('\n');
@@ -276,7 +275,7 @@ void Measure_function(void *uncast_data){
       break;
 
     // Pressure
-    case 2:
+    case 1:
       Serial1.write("2");
       while ( !Serial1.available()){}
       serialResponse = Serial1.readStringUntil('\n');
@@ -301,7 +300,7 @@ void Measure_function(void *uncast_data){
       Serial1.write("3");
       while ( !Serial1.available()){}
       serialResponse = Serial1.readStringUntil('\n');
-      if(abs(*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr)) - serialResponse.toInt())/(*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))) >= 0.15){
+      if(fabs(*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr)) - serialResponse.toInt())/(*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))) >= 0.15){
         *(data->pulseRateIndexPtr) = (*(data->pulseRateIndexPtr) + 1 ) % 8;
         *(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr)) = serialResponse.toInt();
       }
@@ -321,12 +320,12 @@ void Compute_function(void *uncast_data){
 
   switch(*(data->measurementSelectionPtr)){
     // Temperature
-    case 1:
+    case 2:
       *(data->tempCorrectedBufPtr + *(data->tempIndexPtr)) = 5+0.75*(*(data->temperatureRawBufPtr + *(data->tempIndexPtr)));
       break;
 
     // blood pressure
-    case 2:
+    case 1:
       *(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)) = 9+2*(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr)));
       *(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr) + 8) = 6+1.5*(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8));
       break;
@@ -348,7 +347,7 @@ void Communications_function(void *uncast_data){
   DataStructCommunications* data;
   data=(DataStructCommunications*)uncast_data;
 
-  /*Serial.write("Temperature:          ");
+  Serial.write("Temperature:          ");
   Serial.print(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
   Serial.write(" C\n");
   Serial.write("Systolic pressure:    ");
@@ -362,7 +361,7 @@ void Communications_function(void *uncast_data){
   Serial.write(" BPM\n");
   Serial.write("Battery:              ");
   Serial.print(*(data->batteryStatePtr));
-  Serial.write("\n");*/
+  Serial.write("\n");
 
   *(data->addFlagPtr) = false;
 }
@@ -381,12 +380,14 @@ void bar_text(){
    tft.setRotation(2);
   }
 
+
+
 void Measure_text(){
    tft.setRotation(1);
    tft.setCursor(10, 60);
    tft.setTextSize(2);
    tft.setTextColor(WHITE,CYAN);
-   tft.println("Boold");
+   tft.println("Blood");
    tft.setCursor(10, 100);
    tft.print("Temp.");
    tft.setCursor(10, 140);
@@ -394,6 +395,34 @@ void Measure_text(){
    tft.setRotation(2);
   }
 
+void Measure_text1(){
+   tft.setRotation(1);
+   tft.setCursor(10, 60);
+   tft.setTextSize(2);
+   tft.setTextColor(BLACK,CYAN);
+   tft.println("Blood");
+   tft.setRotation(2);
+  }
+
+void Measure_text2(){
+   tft.setRotation(1);
+  
+   tft.setTextSize(2);
+   tft.setTextColor(BLACK,CYAN);
+   tft.setCursor(10, 100);
+   tft.print("Temp.");
+   tft.setRotation(2);
+  }
+
+void Measure_text3(){
+   tft.setRotation(1);
+  
+   tft.setTextSize(2);
+   tft.setTextColor(BLACK,CYAN);
+    tft.setCursor(10, 140);
+   tft.print("Pulse");
+   tft.setRotation(2);
+  }
 
 void text_for_display(DataStructDisplay* data){
    tft.setRotation(1);
@@ -455,7 +484,7 @@ void text_for_display(DataStructDisplay* data){
    tft.setTextColor(WHITE);
    tft.println("        ");
    tft.print("Battery status: ");
-   if (batteryState<=20){tft.setTextColor(RED,BLACK);}
+   if (batteryState<=40){tft.setTextColor(ORANGE,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
    tft.print(*(data->batteryStatePtr));
    tft.println("   ");
@@ -510,6 +539,8 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, WHITE);
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+      Measure_text();
+      Measure_text1();
 
       
     }else if(*(data->measurementSelectionPtr)==2){
@@ -518,6 +549,8 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5,  WHITE);
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+      Measure_text();
+      Measure_text2();
       
     }else if(*(data->measurementSelectionPtr)==3){
 
@@ -525,6 +558,8 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, WHITE);
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
+      Measure_text();
+      Measure_text3();
       
 
     }else {
@@ -573,7 +608,7 @@ void TFTKeypad_function(void *uncast_data){
   unsigned long start_time=millis();
   
   unsigned long count=0;
-  while (count<500){
+  while (count<800){
   digitalWrite(13, HIGH);
     TSPoint p = ts.getPoint();
     digitalWrite(13, LOW);
@@ -626,12 +661,12 @@ void TFTKeypad_function(void *uncast_data){
            //*(data->Function_SelectPtr)=1;
            *(data->functionSelectPtr)=1;
          }
-  
+         
       }
       
 
       if(*(data->functionSelectPtr)==0){
-        for(int i=0;i<10000;i++){}
+        
         if (p.x>H && p.x < 2*H && p.y> 2*W && p.y<3*W) {
           *(data->alarmAcknowledgePtr)=1;
          
@@ -652,6 +687,7 @@ void TFTKeypad_function(void *uncast_data){
            *(data->measurementSelectionPtr)=0;
           
           }
+          
 
       }   
     }
@@ -860,14 +896,16 @@ void setup() {
   taskAddFlag[0] = true; Insert(taskArray[0]); taskInQue[0] = true;
   taskAddFlag[1] = true; Insert(taskArray[1]); taskInQue[1] = true;
   taskAddFlag[2] = true; Insert(taskArray[2]); taskInQue[2] = true;
-
+  
   //Initialized taskqueFinishPin
   pinMode(taskqueFinishPin, OUTPUT);
   digitalWrite(taskqueFinishPin, LOW);
 
   //Initialized serial port 0 & 1
-  Serial.begin(9600);
-  Serial1.begin(9600);
+  Serial.begin(2000000);
+  Serial1.begin(2000000);
+  Serial.setTimeout(5);
+  Serial1.setTimeout(5);
 
   //Initialized for TFT
   Serial.println(F("TFT LCD test"));
@@ -926,7 +964,7 @@ void loop() {
   for (int i=0; i<numTask; i++)
     taskTime[i] = 0;
   for (int i=0; i<4; i++){
-    if (!mAvailable[i] && millis() - mStart_time[i] >= 5000)
+    if (!mAvailable[i] && (millis() - mStart_time[i] >= 5000))
       mAvailable[i] = true;
   }
   if (mAvailable[3]){
@@ -935,11 +973,12 @@ void loop() {
     mAvailable[3] = false;
     mStart_time[3] = millis();
   }
-  if (measurementSelection && mAvailable[measurementSelection-1]){
-    for (int i=0; i<3; i++)
-      taskAddFlag[i+2] = true;
-    mAvailable[measurementSelection-1] = false;
-    mStart_time[measurementSelection-1] = millis();
+  if (measurementSelection)
+    if (mAvailable[measurementSelection-1]){
+      for (int i=0; i<3; i++)
+        taskAddFlag[i+2] = true;
+      mAvailable[measurementSelection-1] = false;
+      mStart_time[measurementSelection-1] = millis();
   }
   //Serial.println("  **Schdeuler**  ");
   for (int i=0; i<numTask; i++){
@@ -953,36 +992,17 @@ void loop() {
     }
   }
   currentTask = head;
-  /*while (currentTask != NULL){
-    Serial.print(String(*(unsigned char *)(currentTask->taskDataPtr))+" ");
-    Serial.print(taskName[*(unsigned char *)(currentTask->taskDataPtr)]);
-    Serial.print(" ");
-    currentTask = currentTask->next;
-  }
-  Serial.println("");
-  for (int i=0; i<numTask; i++){
-    Serial.print(String(taskAddFlag[i])+" "+String(taskInQue[i])+"/");
-  }
-  Serial.println("");
-  Serial.println("  **Start Que**  ");*/
-  currentTask = head;
   while (currentTask != NULL){
     start_time = millis();
     (currentTask->myTask)(currentTask->taskDataPtr); //execute task
     taskTime[*(unsigned char *)(currentTask->taskDataPtr)] = millis() - start_time;
-    Serial.write(taskName[*(unsigned char *)(currentTask->taskDataPtr)].c_str());
     currentTask = currentTask->next;
   }
-  /*Serial.println("  **End Que**  ");
-  for (int i=0; i<numTask; i++){
-    Serial.print(String(taskAddFlag[i])+" "+String(taskInQue[i])+"/");
-  }
-  Serial.println("");*/
   //toggle pin after one cycle of task que
   digitalWrite(taskqueFinishPin, !digitalRead(taskqueFinishPin));
   //show execution time for each task in serial monitor
-  //message = "";
+  message = "";
   for (int i=0; i<numTask; i++)
     message += taskName[i] + ": " + taskTime[i] + " ms\n";
-  Serial.write(message.c_str());
+  //Serial.write(message.c_str());
 }
