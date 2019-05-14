@@ -904,8 +904,8 @@ void setup() {
   //Initialized serial port 0 & 1
   Serial.begin(2000000);
   Serial1.begin(2000000);
-  Serial.setTimeout(50);
-  Serial1.setTimeout(50);
+  Serial.setTimeout(5);
+  Serial1.setTimeout(5);
 
   //Initialized for TFT
   Serial.println(F("TFT LCD test"));
@@ -980,7 +980,7 @@ void loop() {
       mAvailable[measurementSelection-1] = false;
       mStart_time[measurementSelection-1] = millis();
   }
-  Serial.println("  **Schdeuler**  ");
+  //Serial.println("  **Schdeuler**  ");
   for (int i=0; i<numTask; i++){
     if (taskAddFlag[i]==false && taskInQue[i]==true){
       Delete(taskArray[i]);
@@ -993,35 +993,16 @@ void loop() {
   }
   currentTask = head;
   while (currentTask != NULL){
-    Serial.print(String(*(unsigned char *)(currentTask->taskDataPtr))+" ");
-    Serial.print(taskName[*(unsigned char *)(currentTask->taskDataPtr)]);
-    Serial.print(" ");
-    currentTask = currentTask->next;
-  }
-  Serial.println("");
-  for (int i=0; i<numTask; i++){
-    Serial.print(String(taskAddFlag[i])+" "+String(taskInQue[i])+"/");
-  }
-  Serial.println("");
-  Serial.println("  **Start Que**  ");
-  currentTask = head;
-  while (currentTask != NULL){
     start_time = millis();
     (currentTask->myTask)(currentTask->taskDataPtr); //execute task
     taskTime[*(unsigned char *)(currentTask->taskDataPtr)] = millis() - start_time;
-    Serial.write(taskName[*(unsigned char *)(currentTask->taskDataPtr)].c_str());
     currentTask = currentTask->next;
   }
-  Serial.println("  **End Que**  ");
-  for (int i=0; i<numTask; i++){
-    Serial.print(String(taskAddFlag[i])+" "+String(taskInQue[i])+"/");
-  }
-  Serial.println("");
   //toggle pin after one cycle of task que
   digitalWrite(taskqueFinishPin, !digitalRead(taskqueFinishPin));
   //show execution time for each task in serial monitor
   message = "";
   for (int i=0; i<numTask; i++)
     message += taskName[i] + ": " + taskTime[i] + " ms\n";
-  Serial.write(message.c_str());
+  //Serial.write(message.c_str());
 }
