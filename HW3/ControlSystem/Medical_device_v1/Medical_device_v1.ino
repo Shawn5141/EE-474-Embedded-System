@@ -368,6 +368,7 @@ void Communications_function(void *uncast_data){
  
 /*Helper function*/
 
+//The upper bar text
 void bar_text(){
    tft.setRotation(1);
    tft.setCursor(10, 10);
@@ -381,7 +382,7 @@ void bar_text(){
   }
 
 
-
+//The measurement function text without selection
 void Measure_text(){
    tft.setRotation(1);
    tft.setCursor(10, 60);
@@ -395,6 +396,7 @@ void Measure_text(){
    tft.setRotation(2);
   }
 
+//The measurement function 1 text
 void Measure_text1(){
    tft.setRotation(1);
    tft.setCursor(10, 60);
@@ -404,19 +406,18 @@ void Measure_text1(){
    tft.setRotation(2);
   }
 
+//The measurement function 2 text
 void Measure_text2(){
    tft.setRotation(1);
-  
    tft.setTextSize(2);
    tft.setTextColor(BLACK,CYAN);
    tft.setCursor(10, 100);
    tft.print("Temp.");
    tft.setRotation(2);
   }
-
+//The measurement function 2 text
 void Measure_text3(){
    tft.setRotation(1);
-  
    tft.setTextSize(2);
    tft.setTextColor(BLACK,CYAN);
     tft.setCursor(10, 140);
@@ -424,6 +425,7 @@ void Measure_text3(){
    tft.setRotation(2);
   }
 
+//The text displayed in main page
 void text_for_display(DataStructDisplay* data){
    tft.setRotation(1);
    tft.setCursor(0, 60);
@@ -436,11 +438,14 @@ void text_for_display(DataStructDisplay* data){
    tft.print(" Systolic : ");
    if (bpOutOfRange==1){
       tft.setTextColor(ORANGE,BLACK);
-      
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
-      
       tft.println(" mmHg   ");}
-   else{
+   else if(*(data->alarmAcknowledgePtr)>5){
+	   tft.setTextColor(RED,BLACK);
+      tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
+      tft.println(" mmHg   ");
+   
+   }else{
       tft.setTextColor(GREEN,BLACK);
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
       tft.println(" mmHg   ");};
@@ -452,7 +457,6 @@ void text_for_display(DataStructDisplay* data){
    tft.print(" Diastolic :");
    if (bpOutOfRange==1){
       tft.setTextColor(ORANGE,BLACK);
-      
       tft.print(*(data->bloodPressCorrectedBufPtr +8+ *(data->bloodPressIndexPtr)));
       tft.println(" mmHg ");}
    else{
@@ -504,7 +508,7 @@ void Display_function(void *uncast_data){
 
   
   if (*(data->functionSelectPtr)==0 )  {
-    //Ann Select diagram
+    //Ann Select diagram first time enter
     if (*(data->initial_val_AnnPtr)==0){
     tft.setRotation(2);
     //tft.fillRect(0,320-2*W, H, W, GREEN);
@@ -514,13 +518,15 @@ void Display_function(void *uncast_data){
     text_for_display(data);
     *(data->initial_val_AnnPtr)=1;
     }else{
+	//Ann Select diagram second time enter
     bar_text();
     text_for_display(data);
       
       }
 
     //Todo the acknoledge block
-    
+    if (*(data->alarmAcknowledgePtr)>5)
+		*(data->alarmAcknowledgePtr)=0;
     //Serial.println("display screen");
     
   }else{
