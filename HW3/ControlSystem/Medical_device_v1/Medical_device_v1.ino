@@ -965,20 +965,27 @@ void setup() {
   pinMode(13, OUTPUT);
 }
 
+//taskArray = {"Display", "TFTKeypad", "WarningAlarm", "Compute", "Measure", "Status", "Communications"}
 /*Scheduler*/
 void loop() {
+  /*//set each task execution time to zero
   for (int i=0; i<numTask; i++)
-    taskTime[i] = 0;
+    taskTime[i] = 0;*/
+  // Enable Measure and Status tasks if time exceeds 5 seconds
   for (int i=0; i<4; i++){
     if (!mAvailable[i] && (millis() - mStart_time[i] >= 5000))
       mAvailable[i] = true;
   }
+  // Set add flags of Status and WarningAlarm tasks when Status is available,
+  // disable Status and start timer
   if (mAvailable[3]){
     taskAddFlag[5] = true;
     taskAddFlag[2] = true;
     mAvailable[3] = false;
     mStart_time[3] = millis();
   }
+  // Set add flags of Measure, Compute and WarningAlarm tasks when selected Measure is available,
+  // disable the selected Measure and start timer
   if (measurementSelection)
     if (mAvailable[measurementSelection-1]){
       for (int i=0; i<3; i++)
@@ -986,7 +993,7 @@ void loop() {
       mAvailable[measurementSelection-1] = false;
       mStart_time[measurementSelection-1] = millis();
   }
-  //Serial.println("  **Schdeuler**  ");
+  // Sechdule the task by comparing the add flag and in queue flag of each task
   for (int i=0; i<numTask; i++){
     if (taskAddFlag[i]==false && taskInQue[i]==true){
       Delete(taskArray[i]);
@@ -997,18 +1004,19 @@ void loop() {
       taskInQue[i] = true;
     }
   }
+  // Start executing the task queue
   currentTask = head;
   while (currentTask != NULL){
-    start_time = millis();
+    //start_time = millis();
     (currentTask->myTask)(currentTask->taskDataPtr); //execute task
-    taskTime[*(unsigned char *)(currentTask->taskDataPtr)] = millis() - start_time;
+    //taskTime[*(unsigned char *)(currentTask->taskDataPtr)] = millis() - start_time;
     currentTask = currentTask->next;
   }
-  //toggle pin after one cycle of task que
+  //toggle pin after one cycle of task queue
   digitalWrite(taskqueFinishPin, !digitalRead(taskqueFinishPin));
-  //show execution time for each task in serial monitor
+  /*//show execution time for each task in serial monitor
   message = "";
   for (int i=0; i<numTask; i++)
     message += taskName[i] + ": " + taskTime[i] + " ms\n";
-  //Serial.write(message.c_str());
+  Serial.write(message.c_str());*/
 }
