@@ -111,7 +111,7 @@ unsigned char bpOutOfRange=0, tempOutOfRange=0, pulseOutOfRange=0;
 //Warning
 bool bpHigh=false, tempHigh=false, pulseLow=false;
 //TFT Keypad
-unsigned short functionSelect=0, measurementSelection=0, alarmAcknowledge=0;
+unsigned short functionSelect=0, measurementSelection=0, alarmAcknowledge=0,AnnSelection=0;
 unsigned short initial_val_menu=0, initial_val_Ann=0;
 
 /*Define tasks*/
@@ -169,7 +169,7 @@ typedef struct DataStructDisplay{
   unsigned char *tempCorrectedBufPtr, *bloodPressCorrectedBufPtr;
   unsigned char *pulseRateCorrectedBufPtr;
   unsigned short *batteryStatePtr;
-  unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr;
+  unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr,*AnnSelectionPtr;
   unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
   unsigned short *initial_val_menuPtr, *initial_val_AnnPtr;
   bool *addFlagPtr;
@@ -180,7 +180,7 @@ DataStructDisplay DisplayData;
 typedef struct DataStructWarningAlarm{
   unsigned char id;
   unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr;
-  unsigned short *batteryStatePtr, *alarmAcknowledgePtr;
+  unsigned short *batteryStatePtr, *alarmAcknowledgePtr,*AnnSelectionPtr;
   unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
   bool *addFlagPtr, *addComFlagPtr;
 }DataStructWarningAlarm;
@@ -197,7 +197,7 @@ DataStructStatus StatusData;
 //Task TFTKeypad's data
 typedef struct DataStructTFTKeypad{
   unsigned char id;
-  unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr;
+  unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr,*AnnSelectionPtr;
   bool *addFlagPtr;
   unsigned short *initial_val_menuPtr, *initial_val_AnnPtr;
 }DataStructTFTKeypad;
@@ -425,6 +425,15 @@ void Measure_text3(){
    tft.setRotation(2);
   }
 
+void Acknoledge_text(){
+   tft.setRotation(1);
+   tft.setTextSize(2);
+   tft.setTextColor(WHITE,CYAN);
+    tft.setCursor(10+Measure_Select_width, 60);
+   tft.print("Ack.");
+   tft.setRotation(2);
+  }
+
 //The text displayed in main page
 void text_for_display(DataStructDisplay* data){
    tft.setRotation(1);
@@ -441,7 +450,7 @@ void text_for_display(DataStructDisplay* data){
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
       tft.println(" mmHg   ");}
    else if(*(data->alarmAcknowledgePtr)>5){
-	   tft.setTextColor(RED,BLACK);
+     tft.setTextColor(RED,BLACK);
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
       tft.println(" mmHg   ");
    
@@ -518,20 +527,40 @@ void Display_function(void *uncast_data){
     text_for_display(data);
     *(data->initial_val_AnnPtr)=1;
     }else{
-	//Ann Select diagram second time enter
-    bar_text();
-    text_for_display(data);
+    //Ann Select diagram second time enter
+
+
+      if (*(data->AnnSelectionPtr)==1){
+        tft.fillRect(H+5,0, tft.width(),tft.height(), BLACK);
+        tft.fillRect(H+5,320-2*W+5, 1*H-5, W-5, CYAN);
+        tft.drawRect(H+5,320-2*W+5, 1*H-5, W-5, WHITE);
+        Acknoledge_text();
+        }
+      else{
+        if (*(data->AnnSelectionPtr)==2){
+        tft.fillRect(H+5,0, tft.width(),tft.height(), BLACK);
+        }
+        text_for_display(data);
+       }
+
+
+    
+      bar_text();
+      
       
       }
 
     //Todo the acknoledge block
-    if (*(data->alarmAcknowledgePtr)>5)
-		*(data->alarmAcknowledgePtr)=0;
+
+    
+    if (*(data->alarmAcknowledgePtr)>5 && *(data->AnnSelectionPtr)==2)
+      *(data->alarmAcknowledgePtr)=0;
+      *(data->AnnSelectionPtr)=0;
     //Serial.println("display screen");
     
   }else{
 
-
+    
     tft.setRotation(2);
     tft.drawRect(0,320-3*W, H, W, WHITE);
     for(int i=0; i<10000;i++){};
@@ -674,8 +703,22 @@ void TFTKeypad_function(void *uncast_data){
       if(*(data->functionSelectPtr)==0){
         
         if (p.x>H && p.x < 2*H && p.y> 2*W && p.y<3*W) {
+
+
+          
+          
+          if(*(data->AnnSelectionPtr)==2){
+              *(data->AnnSelectionPtr)=0;
+          }else{
+          Serial.print("123");
+          *(data->AnnSelectionPtr)=2;
           *(data->alarmAcknowledgePtr)=1;
+          }  
+                  
+              
          
+        }else if(p.x < H && p.y> 2*W && p.y<3*W){
+              *(data->AnnSelectionPtr)=1;
         }
 
       }else if (p.y > tft.height()- Measure_Select_width){
@@ -837,6 +880,7 @@ void setup() {
   DisplayData.batteryStatePtr = &batteryState;
   DisplayData.measurementSelectionPtr = &measurementSelection;
   DisplayData.alarmAcknowledgePtr = &alarmAcknowledge;
+  DisplayData.AnnSelectionPtr=&AnnSelection;
   DisplayData.functionSelectPtr = &functionSelect;
   DisplayData.tempIndexPtr = &tempIndex;
   DisplayData.bloodPressIndexPtr = &bloodPressIndex;
@@ -855,6 +899,7 @@ void setup() {
   WarningAlarmData.pulseRateRawBufPtr = pulseRateRawBuf;
   WarningAlarmData.batteryStatePtr = &batteryState;
   WarningAlarmData.alarmAcknowledgePtr = &alarmAcknowledge;
+  WarningAlarmData.AnnSelectionPtr=&AnnSelection;
   WarningAlarmData.tempIndexPtr = &tempIndex;
   WarningAlarmData.bloodPressIndexPtr = &bloodPressIndex;
   WarningAlarmData.pulseRateIndexPtr = &pulseRateIndex;
@@ -876,6 +921,7 @@ void setup() {
   TFTKeypad.myTask = TFTKeypad_function;
   TFTKeypadData.measurementSelectionPtr = &measurementSelection;
   TFTKeypadData.alarmAcknowledgePtr = &alarmAcknowledge;
+  TFTKeypadData.AnnSelectionPtr=&AnnSelection;
   TFTKeypadData.functionSelectPtr = &functionSelect;
   TFTKeypadData.initial_val_menuPtr = &initial_val_menu;
   TFTKeypadData.initial_val_AnnPtr = &initial_val_Ann;
