@@ -19,6 +19,10 @@ bool diastolicPressRaw_flip = true; // if set to false, it means complete
 bool diastolic_reset = false;
 bool pulseRateRaw_flip = true;
 
+volatile unsigned long pulse = 0;
+unsigned long pulse_lasttime = 0;
+unsigned long pulse_thistime = 0;
+
 // string for serial communication
 String whichTask;
 String measureData = "";
@@ -27,6 +31,8 @@ String measureData = "";
 void setup(){
   Serial.begin(2000000);
   Serial.setTimeout(5);
+  pinMode(2, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(2), pulse_count, RISING);
 }
 
 // main loop
@@ -143,32 +149,19 @@ unsigned int get_diastolicPressRaw(){
 
 unsigned int get_pulseRateRaw(){
 
-  // before pulseRateRaw exceed 50
-  if( pulseRateRaw_flip ){
-    if( pulseRateRaw_count > 0 ) pulseRateRaw -= 1;
-    else pulseRateRaw += 3;
-
-    if( pulseRateRaw > 40 ) pulseRateRaw_flip = false; 
-  }
-
-  // before pulseRateRaw lower than 15
-  else{
-    if( pulseRateRaw_count > 0 ) pulseRateRaw += 1;
-    else pulseRateRaw -= 3;
-
-    if( pulseRateRaw < 15 ) pulseRateRaw_flip = true; 
-  }
-
-//  pulseRateRaw *= (1.0+(random(-20, 20)/100.0));
-//  if( pulseRateRaw > 200) pulseRateRaw = 200;
-//  else if( pulseRateRaw < 0) pulseRateRaw = 0;
-//  
-//  // flip counter
-//  pulseRateRaw_count *= -1 ;
+  pulse_thistime = micros();
+  pulseRateRaw = (unsigned int)((double)pulse*60.0 *1000000.0 / (double)(pulse_thistime - pulse_lasttime));
+//  pulseRateRaw = (unsigned int)((double)pulse*60.0 / (double)(5000)*1000.0);
+  pulse = 0;
+  pulse_lasttime = pulse_thistime;
   return pulseRateRaw;
 }
 
 unsigned short get_batteryStatus(){
   if( batteryStatus > 0 ) batteryStatus -= 1;
   return batteryStatus;
+}
+
+void pulse_count() {
+  pulse ++;
 }
