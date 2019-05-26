@@ -10,7 +10,7 @@ typedef struct TCB{
 TCB* head=NULL;
 TCB* tail=NULL;
 
-void insert(TCB* node){
+void Insert(TCB* node){
    if(NULL==head){
         head=node;
         tail=node;
@@ -76,11 +76,14 @@ int main(int argc,char** argv){
     tail->prev=head;
     tail->next=NULL;
 
-    insert(Node2);
-    printf("head %d",head->val);
-    Delete(Node);
-    printf("tail%d",head->next->val);
-    printf("\n");
+    Insert(Node2);
+    printf(" 0 head %d ",head->val);
+    printf(" 2 next %d ",head->next->val);
+    printf(" 1 tail %d\n",head->next->next->val);
+    Delete(Node1);
+    printf(" 0 head1 %d ",head->val);
+    printf(" 2 tail1 %d\n",head->next->val);
+    //printfln("\n");
     return 0;
 }
 
