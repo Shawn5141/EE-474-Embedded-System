@@ -179,7 +179,8 @@ DataStructDisplay DisplayData;
 //Task WarningAlarm's data
 typedef struct DataStructWarningAlarm{
   unsigned char id;
-  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr;
+  unsigned char *tempCorrectedBufPtr, *bloodPressCorrectedBufPtr;
+  unsigned char *pulseRateCorrectedBufPtr;
   unsigned short *batteryStatePtr, *alarmAcknowledgePtr,*AnnSelectionPtr;
   unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
   bool *addFlagPtr, *addComFlagPtr;
@@ -777,7 +778,7 @@ void TFTKeypad_function(void *uncast_data){
 void WarningAlarm_function(void *uncast_data){
   DataStructWarningAlarm * data;
   data = ( DataStructWarningAlarm *)uncast_data;
-  if(*(data->temperatureRawBufPtr + *(data->tempIndexPtr))<36.1 || *(data->temperatureRawBufPtr + *(data->tempIndexPtr))>37.8){
+  if(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr))<36.1 || *(data->tempCorrectedBufPtr + *(data->tempIndexPtr))>37.8){
     tempOutOfRange=1;
       tempHigh=true;
     }else{
@@ -785,10 +786,10 @@ void WarningAlarm_function(void *uncast_data){
       tempOutOfRange=0;
     
   }
-  if (*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))<120 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130){
+  if (*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr))<120 || *(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr))>130){
       bpOutOfRange=1;
       *(data->addComFlagPtr) = true;
-      if(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130*1.2){
+      if(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr))>130*1.2){
         *(data->alarmAcknowledgePtr) ++;
         bpHigh=true;
       }else{
@@ -803,13 +804,13 @@ void WarningAlarm_function(void *uncast_data){
       bpOutOfRange=0;
   }
 
-  if (*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8)<70 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8)>80){
+  if (*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr) + 8)<70 || *(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr) + 8)>80){
       bpOutOfRange=1;
     }else{
       bpOutOfRange=0;
   }
   
-  if (*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))<60 || *(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))>100){
+  if (*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr))<60 || *(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr))>100){
       pulseOutOfRange=1;
       pulseLow=true;
     }else{
@@ -917,9 +918,9 @@ void setup() {
 
   //Initialized task WarningAlarm
   WarningAlarm.myTask = WarningAlarm_function;
-  WarningAlarmData.temperatureRawBufPtr = temperatureRawBuf;
-  WarningAlarmData.bloodPressRawBufPtr = bloodPressRawBuf;
-  WarningAlarmData.pulseRateRawBufPtr = pulseRateRawBuf;
+  WarningAlarmData.tempCorrectedBufPtr = tempCorrectedBuf;
+  WarningAlarmData.bloodPressCorrectedBufPtr = bloodPressCorrectedBuf;
+  WarningAlarmData.pulseRateCorrectedBufPtr = pulseRateCorrectedBuf;
   WarningAlarmData.batteryStatePtr = &batteryState;
   WarningAlarmData.alarmAcknowledgePtr = &alarmAcknowledge;
   WarningAlarmData.AnnSelectionPtr=&AnnSelection;
