@@ -111,7 +111,7 @@ unsigned char bpOutOfRange=0, tempOutOfRange=0, pulseOutOfRange=0;
 //Warning
 bool bpHigh=false, tempHigh=false, pulseLow=false;
 //TFT Keypad
-unsigned short functionSelect=0, measurementSelection=0, alarmAcknowledge=0;
+unsigned short functionSelect=0, measurementSelection=0, alarmAcknowledge=0,AnnSelection=0;
 unsigned short initial_val_menu=0, initial_val_Ann=0;
 
 /*Define tasks*/
@@ -134,7 +134,7 @@ bool taskInQue[numTask]={false};
 /*Scheduler data*/
 String message; //message of task time
 #define taskqueFinishPin 30 //pin to be toggled after one cycle of task que
-unsigned long mStart_time[4]; //the start time of each measurement
+unsigned long mStart_time[4]={0,0,0,0}; //the start time of each measurement
 bool mAvailable[4]={true,true,true,true}; //availibility of each measurement
 unsigned long start_time; //the start time of each task
 unsigned long taskTime[numTask]; //store the execution time of each task
@@ -169,7 +169,7 @@ typedef struct DataStructDisplay{
   unsigned char *tempCorrectedBufPtr, *bloodPressCorrectedBufPtr;
   unsigned char *pulseRateCorrectedBufPtr;
   unsigned short *batteryStatePtr;
-  unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr;
+  unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr,*AnnSelectionPtr;
   unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
   unsigned short *initial_val_menuPtr, *initial_val_AnnPtr;
   bool *addFlagPtr;
@@ -180,7 +180,7 @@ DataStructDisplay DisplayData;
 typedef struct DataStructWarningAlarm{
   unsigned char id;
   unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr;
-  unsigned short *batteryStatePtr, *alarmAcknowledgePtr;
+  unsigned short *batteryStatePtr, *alarmAcknowledgePtr,*AnnSelectionPtr;
   unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
   bool *addFlagPtr, *addComFlagPtr;
 }DataStructWarningAlarm;
@@ -197,7 +197,7 @@ DataStructStatus StatusData;
 //Task TFTKeypad's data
 typedef struct DataStructTFTKeypad{
   unsigned char id;
-  unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr;
+  unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr,*AnnSelectionPtr;
   bool *addFlagPtr;
   unsigned short *initial_val_menuPtr, *initial_val_AnnPtr;
 }DataStructTFTKeypad;
@@ -246,7 +246,6 @@ void Delete(TCB* node){
         node->next->prev=node->prev;
         
     }
-    free(node);
     return;
 
 
@@ -267,7 +266,7 @@ void Measure_function(void *uncast_data){
 
   switch(*(data->measurementSelectionPtr)){
     // Temperature
-    case 1:
+    case 2:
       Serial1.write("1");
       while ( !Serial1.available()){}
       serialResponse = Serial1.readStringUntil('\n');
@@ -276,7 +275,7 @@ void Measure_function(void *uncast_data){
       break;
 
     // Pressure
-    case 2:
+    case 1:
       Serial1.write("2");
       while ( !Serial1.available()){}
       serialResponse = Serial1.readStringUntil('\n');
@@ -301,7 +300,7 @@ void Measure_function(void *uncast_data){
       Serial1.write("3");
       while ( !Serial1.available()){}
       serialResponse = Serial1.readStringUntil('\n');
-      if(abs(*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr)) - serialResponse.toInt())/(*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))) >= 0.15){
+      if(fabs(*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr)) - serialResponse.toInt())/(*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))) >= 0.15){
         *(data->pulseRateIndexPtr) = (*(data->pulseRateIndexPtr) + 1 ) % 8;
         *(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr)) = serialResponse.toInt();
       }
@@ -321,12 +320,12 @@ void Compute_function(void *uncast_data){
 
   switch(*(data->measurementSelectionPtr)){
     // Temperature
-    case 1:
+    case 2:
       *(data->tempCorrectedBufPtr + *(data->tempIndexPtr)) = 5+0.75*(*(data->temperatureRawBufPtr + *(data->tempIndexPtr)));
       break;
 
     // blood pressure
-    case 2:
+    case 1:
       *(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)) = 9+2*(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr)));
       *(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr) + 8) = 6+1.5*(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8));
       break;
@@ -348,7 +347,7 @@ void Communications_function(void *uncast_data){
   DataStructCommunications* data;
   data=(DataStructCommunications*)uncast_data;
 
-  /*Serial.write("Temperature:          ");
+  Serial.write("Temperature:          ");
   Serial.print(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
   Serial.write(" C\n");
   Serial.write("Systolic pressure:    ");
@@ -362,13 +361,14 @@ void Communications_function(void *uncast_data){
   Serial.write(" BPM\n");
   Serial.write("Battery:              ");
   Serial.print(*(data->batteryStatePtr));
-  Serial.write("\n");*/
+  Serial.write("\n");
 
   *(data->addFlagPtr) = false;
 }
  
 /*Helper function*/
 
+//The upper bar text
 void bar_text(){
    tft.setRotation(1);
    tft.setCursor(10, 10);
@@ -381,12 +381,14 @@ void bar_text(){
    tft.setRotation(2);
   }
 
+
+//The measurement function text without selection
 void Measure_text(){
    tft.setRotation(1);
    tft.setCursor(10, 60);
    tft.setTextSize(2);
    tft.setTextColor(WHITE,CYAN);
-   tft.println("Boold");
+   tft.println("Blood");
    tft.setCursor(10, 100);
    tft.print("Temp.");
    tft.setCursor(10, 140);
@@ -394,7 +396,45 @@ void Measure_text(){
    tft.setRotation(2);
   }
 
+//The measurement function 1 text
+void Measure_text1(){
+   tft.setRotation(1);
+   tft.setCursor(10, 60);
+   tft.setTextSize(2);
+   tft.setTextColor(BLACK,CYAN);
+   tft.println("Blood");
+   tft.setRotation(2);
+  }
 
+//The measurement function 2 text
+void Measure_text2(){
+   tft.setRotation(1);
+   tft.setTextSize(2);
+   tft.setTextColor(BLACK,CYAN);
+   tft.setCursor(10, 100);
+   tft.print("Temp.");
+   tft.setRotation(2);
+  }
+//The measurement function 2 text
+void Measure_text3(){
+   tft.setRotation(1);
+   tft.setTextSize(2);
+   tft.setTextColor(BLACK,CYAN);
+    tft.setCursor(10, 140);
+   tft.print("Pulse");
+   tft.setRotation(2);
+  }
+
+void Acknoledge_text(){
+   tft.setRotation(1);
+   tft.setTextSize(2);
+   tft.setTextColor(WHITE,CYAN);
+    tft.setCursor(10+Measure_Select_width, 60);
+   tft.print("Ack.");
+   tft.setRotation(2);
+  }
+
+//The text displayed in main page
 void text_for_display(DataStructDisplay* data){
    tft.setRotation(1);
    tft.setCursor(0, 60);
@@ -407,11 +447,14 @@ void text_for_display(DataStructDisplay* data){
    tft.print(" Systolic : ");
    if (bpOutOfRange==1){
       tft.setTextColor(ORANGE,BLACK);
-      
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
-      
       tft.println(" mmHg   ");}
-   else{
+   else if(*(data->alarmAcknowledgePtr)>5){
+     tft.setTextColor(RED,BLACK);
+      tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
+      tft.println(" mmHg   ");
+   
+   }else{
       tft.setTextColor(GREEN,BLACK);
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
       tft.println(" mmHg   ");};
@@ -423,7 +466,6 @@ void text_for_display(DataStructDisplay* data){
    tft.print(" Diastolic :");
    if (bpOutOfRange==1){
       tft.setTextColor(ORANGE,BLACK);
-      
       tft.print(*(data->bloodPressCorrectedBufPtr +8+ *(data->bloodPressIndexPtr)));
       tft.println(" mmHg ");}
    else{
@@ -455,7 +497,7 @@ void text_for_display(DataStructDisplay* data){
    tft.setTextColor(WHITE);
    tft.println("        ");
    tft.print("Battery status: ");
-   if (batteryState<=20){tft.setTextColor(RED,BLACK);}
+   if (batteryState<=40){tft.setTextColor(ORANGE,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
    tft.print(*(data->batteryStatePtr));
    tft.println("   ");
@@ -475,7 +517,7 @@ void Display_function(void *uncast_data){
 
   
   if (*(data->functionSelectPtr)==0 )  {
-    //Ann Select diagram
+    //Ann Select diagram first time enter
     if (*(data->initial_val_AnnPtr)==0){
     tft.setRotation(2);
     //tft.fillRect(0,320-2*W, H, W, GREEN);
@@ -485,18 +527,40 @@ void Display_function(void *uncast_data){
     text_for_display(data);
     *(data->initial_val_AnnPtr)=1;
     }else{
-    bar_text();
-    text_for_display(data);
+    //Ann Select diagram second time enter
+
+
+      if (*(data->AnnSelectionPtr)==1){
+        tft.fillRect(H+5,0, tft.width(),tft.height(), BLACK);
+        tft.fillRect(H+5,320-2*W+5, 1*H-5, W-5, CYAN);
+        tft.drawRect(H+5,320-2*W+5, 1*H-5, W-5, WHITE);
+        Acknoledge_text();
+        }
+      else{
+        if (*(data->AnnSelectionPtr)==2){
+        tft.fillRect(H+5,0, tft.width(),tft.height(), BLACK);
+        }
+        text_for_display(data);
+       }
+
+
+    
+      bar_text();
+      
       
       }
 
     //Todo the acknoledge block
+
     
+    if (*(data->alarmAcknowledgePtr)>5 && *(data->AnnSelectionPtr)==2)
+      *(data->alarmAcknowledgePtr)=0;
+      *(data->AnnSelectionPtr)=0;
     //Serial.println("display screen");
     
   }else{
 
-
+    
     tft.setRotation(2);
     tft.drawRect(0,320-3*W, H, W, WHITE);
     for(int i=0; i<10000;i++){};
@@ -510,6 +574,8 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, WHITE);
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+      Measure_text();
+      Measure_text1();
 
       
     }else if(*(data->measurementSelectionPtr)==2){
@@ -518,6 +584,8 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5,  WHITE);
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+      Measure_text();
+      Measure_text2();
       
     }else if(*(data->measurementSelectionPtr)==3){
 
@@ -525,6 +593,8 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, WHITE);
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
+      Measure_text();
+      Measure_text3();
       
 
     }else {
@@ -573,7 +643,7 @@ void TFTKeypad_function(void *uncast_data){
   unsigned long start_time=millis();
   
   unsigned long count=0;
-  while (count<500){
+  while (count<800){
   digitalWrite(13, HIGH);
     TSPoint p = ts.getPoint();
     digitalWrite(13, LOW);
@@ -626,15 +696,29 @@ void TFTKeypad_function(void *uncast_data){
            //*(data->Function_SelectPtr)=1;
            *(data->functionSelectPtr)=1;
          }
-  
+         
       }
       
 
       if(*(data->functionSelectPtr)==0){
-        for(int i=0;i<10000;i++){}
+        
         if (p.x>H && p.x < 2*H && p.y> 2*W && p.y<3*W) {
+
+
+          
+          
+          if(*(data->AnnSelectionPtr)==2){
+              *(data->AnnSelectionPtr)=0;
+          }else{
+          Serial.print("123");
+          *(data->AnnSelectionPtr)=2;
           *(data->alarmAcknowledgePtr)=1;
+          }  
+                  
+              
          
+        }else if(p.x < H && p.y> 2*W && p.y<3*W){
+              *(data->AnnSelectionPtr)=1;
         }
 
       }else if (p.y > tft.height()- Measure_Select_width){
@@ -652,6 +736,7 @@ void TFTKeypad_function(void *uncast_data){
            *(data->measurementSelectionPtr)=0;
           
           }
+          
 
       }   
     }
@@ -795,6 +880,7 @@ void setup() {
   DisplayData.batteryStatePtr = &batteryState;
   DisplayData.measurementSelectionPtr = &measurementSelection;
   DisplayData.alarmAcknowledgePtr = &alarmAcknowledge;
+  DisplayData.AnnSelectionPtr=&AnnSelection;
   DisplayData.functionSelectPtr = &functionSelect;
   DisplayData.tempIndexPtr = &tempIndex;
   DisplayData.bloodPressIndexPtr = &bloodPressIndex;
@@ -813,6 +899,7 @@ void setup() {
   WarningAlarmData.pulseRateRawBufPtr = pulseRateRawBuf;
   WarningAlarmData.batteryStatePtr = &batteryState;
   WarningAlarmData.alarmAcknowledgePtr = &alarmAcknowledge;
+  WarningAlarmData.AnnSelectionPtr=&AnnSelection;
   WarningAlarmData.tempIndexPtr = &tempIndex;
   WarningAlarmData.bloodPressIndexPtr = &bloodPressIndex;
   WarningAlarmData.pulseRateIndexPtr = &pulseRateIndex;
@@ -834,6 +921,7 @@ void setup() {
   TFTKeypad.myTask = TFTKeypad_function;
   TFTKeypadData.measurementSelectionPtr = &measurementSelection;
   TFTKeypadData.alarmAcknowledgePtr = &alarmAcknowledge;
+  TFTKeypadData.AnnSelectionPtr=&AnnSelection;
   TFTKeypadData.functionSelectPtr = &functionSelect;
   TFTKeypadData.initial_val_menuPtr = &initial_val_menu;
   TFTKeypadData.initial_val_AnnPtr = &initial_val_Ann;
@@ -860,14 +948,16 @@ void setup() {
   taskAddFlag[0] = true; Insert(taskArray[0]); taskInQue[0] = true;
   taskAddFlag[1] = true; Insert(taskArray[1]); taskInQue[1] = true;
   taskAddFlag[2] = true; Insert(taskArray[2]); taskInQue[2] = true;
-
+  
   //Initialized taskqueFinishPin
   pinMode(taskqueFinishPin, OUTPUT);
   digitalWrite(taskqueFinishPin, LOW);
 
   //Initialized serial port 0 & 1
-  Serial.begin(9600);
-  Serial1.begin(9600);
+  Serial.begin(2000000);
+  Serial1.begin(2000000);
+  Serial.setTimeout(5);
+  Serial1.setTimeout(5);
 
   //Initialized for TFT
   Serial.println(F("TFT LCD test"));
@@ -921,27 +1011,35 @@ void setup() {
   pinMode(13, OUTPUT);
 }
 
+//taskArray = {"Display", "TFTKeypad", "WarningAlarm", "Compute", "Measure", "Status", "Communications"}
 /*Scheduler*/
 void loop() {
+  /*//set each task execution time to zero
   for (int i=0; i<numTask; i++)
-    taskTime[i] = 0;
+    taskTime[i] = 0;*/
+  // Enable Measure and Status tasks if time exceeds 5 seconds
   for (int i=0; i<4; i++){
-    if (!mAvailable[i] && millis() - mStart_time[i] >= 5000)
+    if (!mAvailable[i] && (millis() - mStart_time[i] >= 5000))
       mAvailable[i] = true;
   }
+  // Set add flags of Status and WarningAlarm tasks when Status is available,
+  // disable Status and start timer
   if (mAvailable[3]){
     taskAddFlag[5] = true;
     taskAddFlag[2] = true;
     mAvailable[3] = false;
     mStart_time[3] = millis();
   }
-  if (measurementSelection && mAvailable[measurementSelection-1]){
-    for (int i=0; i<3; i++)
-      taskAddFlag[i+2] = true;
-    mAvailable[measurementSelection-1] = false;
-    mStart_time[measurementSelection-1] = millis();
+  // Set add flags of Measure, Compute and WarningAlarm tasks when selected Measure is available,
+  // disable the selected Measure and start timer
+  if (measurementSelection)
+    if (mAvailable[measurementSelection-1]){
+      for (int i=0; i<3; i++)
+        taskAddFlag[i+2] = true;
+      mAvailable[measurementSelection-1] = false;
+      mStart_time[measurementSelection-1] = millis();
   }
-  //Serial.println("  **Schdeuler**  ");
+  // Sechdule the task by comparing the add flag and in queue flag of each task
   for (int i=0; i<numTask; i++){
     if (taskAddFlag[i]==false && taskInQue[i]==true){
       Delete(taskArray[i]);
@@ -952,37 +1050,19 @@ void loop() {
       taskInQue[i] = true;
     }
   }
-  currentTask = head;
-  /*while (currentTask != NULL){
-    Serial.print(String(*(unsigned char *)(currentTask->taskDataPtr))+" ");
-    Serial.print(taskName[*(unsigned char *)(currentTask->taskDataPtr)]);
-    Serial.print(" ");
-    currentTask = currentTask->next;
-  }
-  Serial.println("");
-  for (int i=0; i<numTask; i++){
-    Serial.print(String(taskAddFlag[i])+" "+String(taskInQue[i])+"/");
-  }
-  Serial.println("");
-  Serial.println("  **Start Que**  ");*/
+  // Start executing the task queue
   currentTask = head;
   while (currentTask != NULL){
-    start_time = millis();
+    //start_time = millis();
     (currentTask->myTask)(currentTask->taskDataPtr); //execute task
-    taskTime[*(unsigned char *)(currentTask->taskDataPtr)] = millis() - start_time;
-    Serial.write(taskName[*(unsigned char *)(currentTask->taskDataPtr)].c_str());
+    //taskTime[*(unsigned char *)(currentTask->taskDataPtr)] = millis() - start_time;
     currentTask = currentTask->next;
   }
-  /*Serial.println("  **End Que**  ");
-  for (int i=0; i<numTask; i++){
-    Serial.print(String(taskAddFlag[i])+" "+String(taskInQue[i])+"/");
-  }
-  Serial.println("");*/
-  //toggle pin after one cycle of task que
+  //toggle pin after one cycle of task queue
   digitalWrite(taskqueFinishPin, !digitalRead(taskqueFinishPin));
-  //show execution time for each task in serial monitor
-  //message = "";
+  /*//show execution time for each task in serial monitor
+  message = "";
   for (int i=0; i<numTask; i++)
     message += taskName[i] + ": " + taskTime[i] + " ms\n";
-  Serial.write(message.c_str());
+  Serial.write(message.c_str());*/
 }

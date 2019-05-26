@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:uno",
+    "port": "/dev/ttyACM0",
+    "sketch": "uno_measure.ino",
+    "programmer": "ArduinoISP.org"
+}
