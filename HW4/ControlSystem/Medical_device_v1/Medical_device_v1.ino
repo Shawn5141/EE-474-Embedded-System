@@ -475,11 +475,15 @@ void text_for_display(DataStructDisplay* data){
    tft.println("        ");
    tft.setTextSize(2);
    tft.print(" Systolic : ");
+   Serial.print("print what");
+   Serial.println(bpOutOfRange);
+   
    if (bpOutOfRange==1 && *(data->alarmAcknowledgePtr)>5){
       tft.setTextColor(RED,BLACK);
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
       tft.println(" mmHg   ");}
    else if(bpOutOfRange==1){
+      Serial.print("print when out of range");
       tft.setTextColor(ORANGE,BLACK);
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
       tft.println(" mmHg   ");
@@ -488,6 +492,7 @@ void text_for_display(DataStructDisplay* data){
       tft.setTextColor(GREEN,BLACK);
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
       tft.println(" mmHg   ");};
+  
     
    tft.setTextColor(WHITE);
    tft.setTextSize(1);
@@ -546,6 +551,8 @@ void Display_function(void *uncast_data){
       bar_text();
   }else{
      bar_text1();
+     Serial.print("Ptr for ann");
+     Serial.println(*(data->AnnSelectionPtr));
     }
 
   
@@ -798,8 +805,11 @@ void WarningAlarm_function(void *uncast_data){
   //Serial.println( *(data->alarmAcknowledgePtr));
   //Serial.print("blood pressure :");
   Serial.println(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr)));
-  if (*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))<120 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130){
+  
+  if (*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))<120 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8)<70 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8)>80){
       bpOutOfRange=1;
+      bpHigh=true;
+      Serial.println("out of range of bp");
       *(data->addComFlagPtr) = true;
       
       if(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130*1.2){
@@ -809,8 +819,8 @@ void WarningAlarm_function(void *uncast_data){
         
         
       }
-      bpHigh=true;
-      bpOutOfRange=1;
+      
+      
     }else{
       // reset acknowledge
       //Serial.print("alarm decrease by 1========");
@@ -820,11 +830,7 @@ void WarningAlarm_function(void *uncast_data){
       bpOutOfRange=0;
   }
 
-  if (*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8)<70 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8)>80){
-      bpOutOfRange=1;
-    }else{
-      bpOutOfRange=0;
-  }
+  
   
   if (*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))<60 || *(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))>100){
       pulseOutOfRange=1;
