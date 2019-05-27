@@ -1152,10 +1152,7 @@ void loop() {
   }
   //toggle pin after one cycle of task queue
   digitalWrite(taskqueFinishPin, !digitalRead(taskqueFinishPin));
-  if (Serial.available()){
-    Serial.write(Serial.read());
-  }
-  /*//show execution time for each task in serial monitor
+  ////show execution time for each task in serial monitor
   message = "";
   for (int i=0; i<numTask; i++)
     message += taskName[i] + ": " + taskTime[i] + " ms\n";
