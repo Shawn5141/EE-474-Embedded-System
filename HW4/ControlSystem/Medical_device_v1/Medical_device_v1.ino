@@ -346,7 +346,7 @@ void Compute_function(void *uncast_data){
 void Communications_function(void *uncast_data){
   DataStructCommunications* data;
   data=(DataStructCommunications*)uncast_data;
-
+/*
   Serial.write("Temperature:          ");
   Serial.print(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
   Serial.write(" C\n");
@@ -362,7 +362,7 @@ void Communications_function(void *uncast_data){
   Serial.write("Battery:              ");
   Serial.print(*(data->batteryStatePtr));
   Serial.write("\n");
-
+*/
   *(data->addFlagPtr) = false;
 }
  
@@ -464,7 +464,7 @@ void text_for_display(DataStructDisplay* data){
    tft.setCursor(0, 60);
    tft.setTextSize(2);
    tft.setTextColor(WHITE);
-   tft.print("Blood Pressure:  ");
+   tft.print("Blood Pressure:      ");
    tft.println(*(data->alarmAcknowledgePtr));
    tft.setTextSize(1);
    tft.println("        ");
@@ -579,8 +579,11 @@ void Display_function(void *uncast_data){
       
       }
 
-      if (*(data->alarmAcknowledgePtr)>5 && *(data->AnnSelectionPtr)==2)
+      if (*(data->alarmAcknowledgePtr)>5 && *(data->AnnSelectionPtr)==2){
+      //Serial.print("greater than 5 and ret==================");
       *(data->alarmAcknowledgePtr)=0;
+      
+      }
       *(data->AnnSelectionPtr)=0;
       //Serial.println("display screen");
     
@@ -730,7 +733,7 @@ void TFTKeypad_function(void *uncast_data){
           if(*(data->AnnSelectionPtr)==2){
               *(data->AnnSelectionPtr)=0;
           }else{
-          Serial.print("123");
+          //Serial.print("123");
           *(data->AnnSelectionPtr)=2;
           *(data->alarmAcknowledgePtr)=1;
           }  
@@ -782,19 +785,29 @@ void WarningAlarm_function(void *uncast_data){
       tempOutOfRange=0;
     
   }
-  if (*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))<120 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130){
+  //Serial.println( *(data->alarmAcknowledgePtr));
+  //Serial.print("blood pressure :");
+  //Serial.println(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr)));
+  if (*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))<120 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))+100>130){
       bpOutOfRange=1;
       *(data->addComFlagPtr) = true;
-      if(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130*1.2){
-        *(data->alarmAcknowledgePtr) ++;
+      
+      if(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))+100>130*1.2){
+        //Serial.println("what are you doing================");
+        (*(data->alarmAcknowledgePtr))+=1;
+        //Serial.println( *(data->alarmAcknowledgePtr));
         bpHigh=true;
       }else{
         // reset acknowledge
+        //Serial.println("reset=============");
+      
         *(data->alarmAcknowledgePtr) = 0;
         bpHigh=false;
       }
     }else{
       // reset acknowledge
+      //Serial.print("alarm decrease by 1========");
+      //Serial.println(*(data->alarmAcknowledgePtr));
       *(data->alarmAcknowledgePtr) = 0;
       bpHigh=false;
       bpOutOfRange=0;
