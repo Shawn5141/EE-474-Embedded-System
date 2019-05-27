@@ -904,7 +904,7 @@ void RemoteComm_function(void *uncast_data){
   String  serialResponse;
 
   if(Serial.available()){
-    serialResponse = Serial1.readStringUntil('\0');
+    serialResponse = Serial.readStringUntil('\0');
     if( serialResponse == "0" ){  
         *data->measurementSelectionPtr = 0;
     }
