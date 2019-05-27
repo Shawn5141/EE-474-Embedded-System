@@ -478,12 +478,12 @@ void text_for_display(DataStructDisplay* data){
    tft.println("        ");
    tft.setTextSize(2);
    tft.print(" Systolic : ");
-   if (bpOutOfRange==1){
-      tft.setTextColor(ORANGE,BLACK);
+   if (bpOutOfRange==1 && *(data->alarmAcknowledgePtr)>5){
+      tft.setTextColor(RED,BLACK);
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
       tft.println(" mmHg   ");}
-   else if(*(data->alarmAcknowledgePtr)>5){
-     tft.setTextColor(RED,BLACK);
+   else if(bpOutOfRange==1){
+      tft.setTextColor(ORANGE,BLACK);
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
       tft.println(" mmHg   ");
    
@@ -809,16 +809,11 @@ void WarningAlarm_function(void *uncast_data){
         if( taskInQue[5]==true){
         (*(data->alarmAcknowledgePtr))+=1; 
         }
-        bpHigh=true;
         
-      }else{
-        // reset acknowledge
-        //Serial.println("reset=============");
-            
-            *(data->alarmAcknowledgePtr) = 0;
-            bpHigh=false;
-            
+        
       }
+      bpHigh=true;
+      bpOutOfRange=1;
     }else{
       // reset acknowledge
       //Serial.print("alarm decrease by 1========");
