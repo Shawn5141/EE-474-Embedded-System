@@ -2,7 +2,8 @@
 unsigned int temperatureRaw = 75;
 unsigned int systolicPressRaw = 80;
 unsigned int diastolicPressRaw = 80;
-unsigned int pulseRateRaw = 50;
+unsigned int pulseRateRaw = 0;
+unsigned int respirationRateRaw = 0;
 unsigned short batteryStatus = 200;
 
 // count the execution time in each measurement. 1 means even time, -1 means odd time
@@ -25,10 +26,18 @@ unsigned long last_pulse = 0;
 unsigned long pulse_lasttime = 0;
 unsigned long pulse_thistime = 0;
 
+// for respiration rate interrupt
+volatile unsigned long respiration = 0;
+unsigned long last_respiration = 0;
+unsigned long respiration_lasttime = 0;
+unsigned long respiration_thistime = 0;
+
 // for pressure interrupt
 int increment = 1;
 unsigned int pressure = 95;
-volatile byte LEDstate = HIGH;
+volatile byte LEDstate = LOW;
+byte pressure_switch_interrupt, last_pressure_switch_interrupt = HIGH;
+byte pressure_count_interrupt, last_pressure_count_interrupt = HIGH;
 
 // string for serial communication
 String whichTask;
@@ -39,17 +48,33 @@ void setup(){
   pinMode(13, OUTPUT);
   Serial.begin(2000000);
   Serial.setTimeout(5);
+  // pulse rate
   pinMode(2, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(2), pulse_count, RISING);
+  attachInterrupt(digitalPinToInterrupt(2), pulse_count, CHANGE);
+  // respiration
   pinMode(3, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(3), pressure_count, RISING);
+  attachInterrupt(digitalPinToInterrupt(3), respiration_count, CHANGE);
   pinMode(4, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(4), pressure_switch, RISING);
+  pinMode(5, INPUT_PULLUP);
 }
 
 // main loop
 void loop(){
   digitalWrite(13, LEDstate);
+  
+  // software interrupt
+  pressure_switch_interrupt = digitalRead(4);
+  pressure_count_interrupt = digitalRead(5);
+  delay(30);
+  if(last_pressure_switch_interrupt != pressure_switch_interrupt){
+    pressure_switch();
+  }
+  if(last_pressure_count_interrupt== HIGH && last_pressure_count_interrupt != pressure_count_interrupt){
+    pressure_count();
+  }
+  last_pressure_switch_interrupt = pressure_switch_interrupt;
+  last_pressure_count_interrupt = pressure_count_interrupt;
+  
   if ( Serial.available() > 0 ) {
     whichTask = Serial.readStringUntil('\0');
 
@@ -66,6 +91,10 @@ void loop(){
     }
     else if( whichTask == "3" ){
         measureData = String(get_pulseRateRaw());
+        Serial.println(measureData);
+    }
+    else if( whichTask == "5" ){
+        measureData = String(get_respirationRateRaw());
         Serial.println(measureData);
     }
 
@@ -171,13 +200,21 @@ unsigned int get_diastolicPressRaw(){
 }
 
 unsigned int get_pulseRateRaw(){
-
   pulse_thistime = micros();
   pulseRateRaw = (unsigned int)((double)(pulse-last_pulse)*60.0 *1000000.0 / (double)(pulse_thistime - pulse_lasttime));
 
   last_pulse = pulse;
   pulse_lasttime = pulse_thistime;
   return pulseRateRaw;
+}
+
+unsigned int get_respirationRateRaw(){
+  respiration_thistime = micros();
+  respirationRateRaw = (unsigned int)((double)(respiration-last_respiration)*60.0 *1000000.0 / (double)(respiration_thistime - respiration_lasttime));
+
+  last_respiration = respiration;
+  respiration_lasttime = respiration_thistime;
+  return respirationRateRaw;
 }
 
 unsigned short get_batteryStatus(){
@@ -187,6 +224,10 @@ unsigned short get_batteryStatus(){
 
 void pulse_count() {
   pulse ++;
+}
+
+void respiration_count() {
+  respiration ++;
 }
 
 void pressure_count(){

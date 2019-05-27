@@ -313,6 +313,16 @@ void Measure_function(void *uncast_data){
       }
       break;
 
+    case 4:
+      Serial1.write("5");
+      while ( !Serial1.available()){}
+      serialResponse = Serial1.readStringUntil('\n');
+      if(fabs(*(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr)) - serialResponse.toInt())/(*(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))) >= 0.15){
+        *(data->respirationRateIndexPtr) = (*(data->respirationRateIndexPtr) + 1 ) % 8;
+        *(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr)) = serialResponse.toInt();
+      }
+      break;
+
     default:
       // nothing
       break;
@@ -341,6 +351,11 @@ void Compute_function(void *uncast_data){
     case 3:
       *(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr)) = 8+3*(*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr)));
       break;
+    
+    // respiration rate
+    case 4:
+      *(data->respirationRateCorrectedBufPtr + *(data->respirationRateIndexPtr)) = 7+3*(*(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr)));
+      break;
 
     default:
       break;
@@ -353,7 +368,7 @@ void Compute_function(void *uncast_data){
 void Communications_function(void *uncast_data){
   DataStructCommunications* data;
   data=(DataStructCommunications*)uncast_data;
-/*
+
   Serial.write("Temperature:          ");
   Serial.print(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
   Serial.write(" C\n");
@@ -366,10 +381,14 @@ void Communications_function(void *uncast_data){
   Serial.write("Pulse rate:           ");
   Serial.print(*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr)));
   Serial.write(" BPM\n");
+  Serial.write("Respiration rate:     ");
+  Serial.print(*(data->respirationRateCorrectedBufPtr + *(data->respirationRateIndexPtr)));
+  Serial.write(" BPM\n");
   Serial.write("Battery:              ");
   Serial.print(*(data->batteryStatePtr));
   Serial.write("\n");
-*/
+
+
   *(data->addFlagPtr) = false;
 }
  
