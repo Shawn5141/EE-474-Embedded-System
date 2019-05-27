@@ -19,10 +19,16 @@ bool diastolicPressRaw_flip = true; // if set to false, it means complete
 bool diastolic_reset = false;
 bool pulseRateRaw_flip = true;
 
+// for pulse rate interrupt
 volatile unsigned long pulse = 0;
 unsigned long last_pulse = 0;
 unsigned long pulse_lasttime = 0;
 unsigned long pulse_thistime = 0;
+
+// for pressure interrupt
+int increment = 1;
+unsigned int pressure = 95;
+volatile byte LEDstate = HIGH;
 
 // string for serial communication
 String whichTask;
@@ -30,14 +36,20 @@ String measureData = "";
 
 // set up serial port
 void setup(){
+  pinMode(13, OUTPUT);
   Serial.begin(2000000);
   Serial.setTimeout(5);
   pinMode(2, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(2), pulse_count, RISING);
+  pinMode(3, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(3), pressure_count, RISING);
+  pinMode(4, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(4), pressure_switch, RISING);
 }
 
 // main loop
 void loop(){
+  digitalWrite(13, LEDstate);
   if ( Serial.available() > 0 ) {
     whichTask = Serial.readStringUntil('\0');
 
@@ -86,65 +98,75 @@ unsigned int get_temperatureRaw(){
   return temperatureRaw;
 }
 
+//unsigned int get_systolicPressRaw(){
+//
+//  // if diastolic is completed and haven't reset
+//  if( !diastolicPressRaw_flip && !systolic_reset ){
+//    systolicPressRaw = 80;
+//    systolic_reset = true;
+//  }
+//
+//  // when first go out of range
+//  else if( systolicPressRaw > 100 && systolicPressRaw_flip == true ){
+//    systolicPressRaw_flip = false; // complete
+//    diastolicPressRaw_flip = true;
+//    systolic_reset = false;
+//  }
+//
+//  // when out of range
+//  else if( systolicPressRaw > 100 && systolicPressRaw_flip == false ){
+//    systolicPressRaw = systolicPressRaw;
+//  }
+//
+//  // when in the range
+//  else{
+//    if( systolicPressRaw_count > 0 ) systolicPressRaw += 3;
+//    else systolicPressRaw -= 1;
+//  }
+//  
+//  // flip counter
+//  systolicPressRaw_count *= -1 ;
+//  return systolicPressRaw;
+//}
+
+//unsigned int get_diastolicPressRaw(){
+//
+//  // if systolic is completed and haven't reset
+//  if( !systolicPressRaw_flip && !diastolic_reset ){
+//    diastolicPressRaw = 80;
+//    diastolic_reset = true;
+//  }
+//
+//  // when first go out of range
+//  else if( diastolicPressRaw < 40 && diastolicPressRaw_flip == true ){
+//    diastolicPressRaw_flip = false; // complete
+//    systolicPressRaw_flip = true; 
+//    diastolic_reset = false;
+//  }
+//
+//  // when go out of range
+//  else if( diastolicPressRaw < 40 && diastolicPressRaw_flip == false ){
+//    diastolicPressRaw = diastolicPressRaw;
+//  }
+//
+//  // when in the range
+//  else{
+//    if( diastolicPressRaw_count > 0 ) diastolicPressRaw -= 2;
+//    else diastolicPressRaw += 1;
+//  }
+//  
+//  // flip counter
+//  diastolicPressRaw_count *= -1 ;
+//  return diastolicPressRaw;
+//}
+
 unsigned int get_systolicPressRaw(){
-
-  // if diastolic is completed and haven't reset
-  if( !diastolicPressRaw_flip && !systolic_reset ){
-    systolicPressRaw = 80;
-    systolic_reset = true;
-  }
-
-  // when first go out of range
-  else if( systolicPressRaw > 100 && systolicPressRaw_flip == true ){
-    systolicPressRaw_flip = false; // complete
-    diastolicPressRaw_flip = true;
-    systolic_reset = false;
-  }
-
-  // when out of range
-  else if( systolicPressRaw > 100 && systolicPressRaw_flip == false ){
-    systolicPressRaw = systolicPressRaw;
-  }
-
-  // when in the range
-  else{
-    if( systolicPressRaw_count > 0 ) systolicPressRaw += 3;
-    else systolicPressRaw -= 1;
-  }
-  
-  // flip counter
-  systolicPressRaw_count *= -1 ;
+  if(pressure >= 110) systolicPressRaw = pressure;
   return systolicPressRaw;
 }
 
 unsigned int get_diastolicPressRaw(){
-
-  // if systolic is completed and haven't reset
-  if( !systolicPressRaw_flip && !diastolic_reset ){
-    diastolicPressRaw = 80;
-    diastolic_reset = true;
-  }
-
-  // when first go out of range
-  else if( diastolicPressRaw < 40 && diastolicPressRaw_flip == true ){
-    diastolicPressRaw_flip = false; // complete
-    systolicPressRaw_flip = true; 
-    diastolic_reset = false;
-  }
-
-  // when go out of range
-  else if( diastolicPressRaw < 40 && diastolicPressRaw_flip == false ){
-    diastolicPressRaw = diastolicPressRaw;
-  }
-
-  // when in the range
-  else{
-    if( diastolicPressRaw_count > 0 ) diastolicPressRaw -= 2;
-    else diastolicPressRaw += 1;
-  }
-  
-  // flip counter
-  diastolicPressRaw_count *= -1 ;
+  if(pressure <= 80) diastolicPressRaw = pressure;
   return diastolicPressRaw;
 }
 
@@ -165,4 +187,14 @@ unsigned short get_batteryStatus(){
 
 void pulse_count() {
   pulse ++;
+}
+
+void pressure_count(){
+  if(increment > 0) pressure = (unsigned int)((double)pressure*1.1);
+  else pressure = (unsigned int)((double)pressure*0.9);
+}
+
+void pressure_switch(){
+  increment*=(-1);
+  LEDstate = !LEDstate;
 }
