@@ -575,8 +575,11 @@ void Display_function(void *uncast_data){
           if (*(data->AnnSelectionPtr)==2){
           tft.fillRect(H+5,0, tft.width(),tft.height(), BLACK);
           text_for_display(data);
-          }
           
+          }else{
+              //Change here for 
+              text_for_display(data);
+              }
          }
   
   
