@@ -484,6 +484,7 @@ void Acknoledge_text(){
 
 //The text displayed in main page
 void text_for_display(DataStructDisplay* data){
+   start_time=millis();
    tft.setRotation(1);
    tft.setCursor(0, 60);
    tft.setTextSize(2);
@@ -494,18 +495,38 @@ void text_for_display(DataStructDisplay* data){
    tft.println("        ");
    tft.setTextSize(2);
    tft.print(" Systolic : ");
-   Serial.print("print what");
-   Serial.println(bpOutOfRange);
+   
    
    if (bpOutOfRange==1 && *(data->alarmAcknowledgePtr)>5){
       tft.setTextColor(RED,BLACK);
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
       tft.println(" mmHg   ");}
    else if(bpOutOfRange==1){
-      Serial.print("print when out of range");
-      tft.setTextColor(ORANGE,BLACK);
+      start_time_bp=millis();
+      if (end_time_bp!=0){
+        Serial.print("=================");
+        Serial.println(start_time_bp-end_time_bp);
+        if (start_time_bp-end_time_bp>1000){
+          //tft.print("          ");
+          end_time_bp=millis()+1000;
+          Serial.print(end_time_bp);
+          tft.setTextColor(ORANGE,BLACK);
+         }
+         else{    
+          
+          //tft.drawRect(143,84,W,H,BLACK)
+          end_time_bp=millis();
+          Serial.print(end_time_bp);
+          }
+      }else{
+        //tft.setCursor(100, 60);
+        end_time_bp=millis();
+        Serial.print(end_time_bp);
+        }
+      
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
       tft.println(" mmHg   ");
+      
    
    }else{
       tft.setTextColor(GREEN,BLACK);
@@ -519,7 +540,27 @@ void text_for_display(DataStructDisplay* data){
    tft.setTextSize(2);
    tft.print(" Diastolic :");
    if (bpOutOfRange==1){
-      tft.setTextColor(ORANGE,BLACK);
+      start_time_bp=millis();
+      if (end_time_bp!=0){
+        Serial.print("=================");
+        Serial.println(start_time_bp-end_time_bp);
+        if (start_time_bp-end_time_bp>1000){
+          //tft.print("          ");
+          end_time_bp=millis()+1000;
+          Serial.print(end_time_bp);
+          tft.setTextColor(ORANGE,BLACK);
+         }
+         else{    
+          
+          tft.drawRect(143,104,W,H,BLACK);
+          end_time_bp=millis();
+          Serial.print(end_time_bp);
+          }
+      }else{
+        //tft.setCursor(100, 60);
+        end_time_bp=millis();
+        Serial.print(end_time_bp);
+        }
       tft.print(*(data->bloodPressCorrectedBufPtr +8+ *(data->bloodPressIndexPtr)));
       tft.println(" mmHg ");}
    else{
@@ -528,9 +569,34 @@ void text_for_display(DataStructDisplay* data){
       tft.println(" mmHg  ");};
    
    tft.setTextColor(WHITE);
+   tft.setTextSize(1);
    tft.println("        ");
+   tft.setTextSize(2);
    tft.print("Temperature:    ");
-   if (tempOutOfRange==1){tft.setTextColor(ORANGE,BLACK);}
+   if (tempOutOfRange==1){
+    start_time_tp=millis();
+      if (end_time_tp!=0){
+        Serial.print("temp====start and subtract");
+        //Serial.println(end_time_tp);
+        Serial.println(start_time_tp-end_time_tp);
+        if (start_time_tp-end_time_tp>2000){
+          end_time_tp=millis()+2000;
+          
+          tft.setTextColor(ORANGE,BLACK);
+         }
+         else{    
+          end_time_tp=millis();
+          
+          }
+      }else{
+        
+        end_time_tp=millis();
+        
+        }
+    
+    
+    //tft.setTextColor(ORANGE,BLACK);
+    }
    else{tft.setTextColor(GREEN,BLACK);};
    tft.print(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
    tft.setTextSize(1);
@@ -540,16 +606,33 @@ void text_for_display(DataStructDisplay* data){
 
   
    tft.setTextColor(WHITE);
+   tft.setTextSize(1);
    tft.println("        ");
+   tft.setTextSize(2);
    tft.print("Pulse Rate:     ");
-   if (pulseOutOfRange==1){tft.setTextColor(ORANGE,BLACK);}
+   if (pulseOutOfRange==1){
+    tft.setTextColor(ORANGE,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
    tft.print(*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr)));
    tft.println(" BPM ");
 
+  tft.setTextColor(WHITE);
+   tft.setTextSize(1);
+   tft.println("        ");
+   tft.setTextSize(2);
+   tft.print("Raspiration:     ");
+   if (rrOutOfRange==1){
+    tft.setTextColor(ORANGE,BLACK);}
+   else{tft.setTextColor(GREEN,BLACK);};
+   tft.print(*(data->respirationRateCorrectedBufPtr + *(data->respirationRateIndexPtr)));
+   tft.println(" RR ");
+   
+
    
    tft.setTextColor(WHITE);
+   tft.setTextSize(1);
    tft.println("        ");
+   tft.setTextSize(2);
    tft.print("Battery status: ");
    if (batteryState<=40){tft.setTextColor(ORANGE,BLACK);}
    else{tft.setTextColor(GREEN,BLACK);};
@@ -809,11 +892,10 @@ void TFTKeypad_function(void *uncast_data){
 
 }
 
-
 void WarningAlarm_function(void *uncast_data){
   DataStructWarningAlarm * data;
   data = ( DataStructWarningAlarm *)uncast_data;
-  if(*(data->temperatureRawBufPtr + *(data->tempIndexPtr))<36.1 || *(data->temperatureRawBufPtr + *(data->tempIndexPtr))>37.8){
+  if(*(data->temperatureRawBufPtr + *(data->tempIndexPtr))<36.1*0.95 || *(data->temperatureRawBufPtr + *(data->tempIndexPtr))>37.8*1.05){
     tempOutOfRange=1;
       tempHigh=true;
     }else{
@@ -825,7 +907,7 @@ void WarningAlarm_function(void *uncast_data){
   //Serial.print("blood pressure :");
   Serial.println(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr)));
   
-  if (*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))<120 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8)<70 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8)>80){
+  if (*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))<120*0.95 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130*1.05 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8)<70*0.95 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8)>80*1.05){
       bpOutOfRange=1;
       bpHigh=true;
       Serial.println("out of range of bp");
@@ -849,9 +931,17 @@ void WarningAlarm_function(void *uncast_data){
       bpOutOfRange=0;
   }
 
+  if (*(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))<12*0.95 || *(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))>25*1.05){
+      rrOutOfRange=1;
+      rrLow=true;
+    }else{
+      rrLow=false;
+      rrOutOfRange=0;
+    
+  }
   
   
-  if (*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))<60 || *(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))>100){
+  if (*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))<60*0.95 || *(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))>100*1.05){
       pulseOutOfRange=1;
       pulseLow=true;
     }else{
@@ -861,7 +951,6 @@ void WarningAlarm_function(void *uncast_data){
   }
   *(data->addFlagPtr) = false;
 }
-
 
 
 void Status_function(void *uncast_data){
