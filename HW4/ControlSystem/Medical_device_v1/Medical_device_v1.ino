@@ -899,7 +899,31 @@ void Status_function(void *uncast_data){
 }
 
 void RemoteComm_function(void *uncast_data){
-  
+  DataStructMeasure* data;
+  data = (DataStructMeasure*)uncast_data;
+  String  serialResponse;
+
+  if(Serial.available()){
+    serialResponse = Serial1.readStringUntil('\0');
+    if( serialResponse == "0" ){  
+        *data->measurementSelectionPtr = 0;
+    }
+    else if( serialResponse == "1" ){
+        *data->measurementSelectionPtr = 1;
+    }
+    else if( serialResponse == "2" ){
+        *data->measurementSelectionPtr = 2;
+    }
+    else if( serialResponse == "3" ){
+        *data->measurementSelectionPtr = 3;
+    }
+    else if( serialResponse == "4" ){
+        *data->measurementSelectionPtr = 4;
+    }
+    else if( serialResponse == "5" ){
+        *data->alarmAcknowledgePtr = 1;
+    }
+  }
 }
 
 void setup() {
