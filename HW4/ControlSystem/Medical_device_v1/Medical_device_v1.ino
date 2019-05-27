@@ -113,7 +113,9 @@ bool bpHigh=false, tempHigh=false, pulseLow=false, rrLow=false, rrHigh=false;
 //TFT Keypad
 unsigned short functionSelect=0, measurementSelection=0, alarmAcknowledge=0,AnnSelection=0;
 unsigned short initial_val_menu=0, initial_val_Ann=0;
-
+unsigned long end_time_bp =0,start_time_bp=0;
+unsigned long end_time_tp =0,start_time_tp=0;
+unsigned long end_time_pr =0,start_time_pr=0;
 /*Define tasks*/
 #define numTask 8
 typedef struct TCB{
