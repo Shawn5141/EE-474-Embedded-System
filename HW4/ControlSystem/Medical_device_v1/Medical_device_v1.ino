@@ -102,7 +102,8 @@ unsigned int pulseRateRawBuf[8], respirationRateRawBuf[8];
 //Buffer index
 unsigned char tempIndex=0, bloodPressIndex=0, pulseRateIndex=0, respirationRateIndex=0;
 //Display
-unsigned char tempCorrectedBuf[8], bloodPressCorrectedBuf[16]; 
+unsigned char tempCorrectedBuf[8];
+unsigned int bloodPressCorrectedBuf[16];
 unsigned char pulseRateCorrectedBuf[8], respirationRateCorrectedBuf[8];
 //Status
 unsigned short batteryState=200;
@@ -153,7 +154,8 @@ DataStructMeasure MeasureData;
 typedef struct DataStructCompute{
   unsigned char id;
   unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr;
-  unsigned char *tempCorrectedBufPtr, *bloodPressCorrectedBufPtr;
+  unsigned char *tempCorrectedBufPtr;
+  unsigned int *bloodPressCorrectedBufPtr;
   unsigned char *pulseRateCorrectedBufPtr;
   unsigned short *measurementSelectionPtr;
   unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
@@ -164,7 +166,8 @@ DataStructCompute ComputeData;
 //Task Display's data
 typedef struct DataStructDisplay{
   unsigned char id;
-  unsigned char *tempCorrectedBufPtr, *bloodPressCorrectedBufPtr;
+  unsigned char *tempCorrectedBufPtr;
+  unsigned int *bloodPressCorrectedBufPtr;
   unsigned char *pulseRateCorrectedBufPtr;
   unsigned short *batteryStatePtr;
   unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr,*AnnSelectionPtr;
@@ -204,8 +207,8 @@ DataStructTFTKeypad TFTKeypadData;
 //Task Communications's data
 typedef struct DataStructCommunications{
   unsigned char id;
-  unsigned char *tempCorrectedBufPtr, *bloodPressCorrectedBufPtr;
-  unsigned char *pulseRateCorrectedBufPtr;
+  unsigned char *tempCorrectedBufPtr, *pulseRateCorrectedBufPtr;
+  unsigned int *bloodPressCorrectedBufPtr;
   unsigned short *batteryStatePtr;
   unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
   bool *addFlagPtr;
@@ -377,38 +380,36 @@ void Communications_function(void *uncast_data){
 
 //The upper bar text
 void bar_text(){
+   //tft.setRotation(2);
+   tft.fillRect( 0,320-2*W, H, W, GREEN);
+   tft.drawRect(0,320-2*W, H, W, WHITE);
    tft.setRotation(1);
    tft.setCursor(10, 10);
    tft.setTextSize(2);
-   tft.setTextColor(WHITE,RED);
+   tft.setTextColor(WHITE,GREEN);
    tft.println("Menu");
    tft.setCursor(90, 10);
    tft.setTextColor(WHITE,GREEN);
    tft.print("Ann.");
    tft.setRotation(2);
   }
+
+
+
 
 
 void bar_text1(){
-   tft.setRotation(1);
-   tft.setCursor(10, 10);
-   tft.setTextSize(2);
-   tft.setTextColor(BLACK,RED);
-   tft.println("Menu");
-   tft.setCursor(90, 10);
-   tft.setTextColor(WHITE,GREEN);
-   tft.print("Ann.");
    tft.setRotation(2);
-  }
-
-void bar_text2(){
+   tft.fillRect( 0,320-2*W, H, W, RED);
+   tft.drawRect(0,320-2*W, H, W, WHITE);
+  
    tft.setRotation(1);
    tft.setCursor(10, 10);
    tft.setTextSize(2);
-   tft.setTextColor(WHITE,RED);
+   tft.setTextColor(WHITE,GREEN);
    tft.println("Menu");
    tft.setCursor(90, 10);
-   tft.setTextColor(WHITE,GREEN);
+   tft.setTextColor(WHITE,RED);
    tft.print("Ann.");
    tft.setRotation(2);
   }
@@ -471,7 +472,7 @@ void text_for_display(DataStructDisplay* data){
    tft.setCursor(0, 60);
    tft.setTextSize(2);
    tft.setTextColor(WHITE);
-   tft.print("Blood Pressure:      ");
+   tft.print("Blood Pressure       ");
    tft.println(*(data->alarmAcknowledgePtr));
    tft.setTextSize(1);
    tft.println("        ");
@@ -544,8 +545,11 @@ void text_for_display(DataStructDisplay* data){
 void Display_function(void *uncast_data){
   DataStructDisplay* data;
   data=(DataStructDisplay*)uncast_data;
-
-  bar_text();
+  if (*(data->alarmAcknowledgePtr)<5){
+      bar_text();
+  }else{
+     bar_text1();
+    }
 
   
   if (*(data->functionSelectPtr)==0 )  {
@@ -735,12 +739,14 @@ void TFTKeypad_function(void *uncast_data){
         if (p.x>H && p.x < 2*H && p.y> 2*W && p.y<3*W) {
 
 
-          
+          Serial.print("=====================");
+          Serial.println(*(data->AnnSelectionPtr));
           
           if(*(data->AnnSelectionPtr)==2){
               *(data->AnnSelectionPtr)=0;
+              Serial.println("ann=0");
           }else{
-          //Serial.print("123");
+            Serial.println("ann=2");
           *(data->AnnSelectionPtr)=2;
           *(data->alarmAcknowledgePtr)=1;
           }  
@@ -794,22 +800,24 @@ void WarningAlarm_function(void *uncast_data){
   }
   //Serial.println( *(data->alarmAcknowledgePtr));
   //Serial.print("blood pressure :");
-  //Serial.println(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr)));
-  if (*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))<120 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))+100>130){
+  Serial.println(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr)));
+  if (*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))<120 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130){
       bpOutOfRange=1;
       *(data->addComFlagPtr) = true;
       
-      if(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))+100>130*1.2){
-        //Serial.println("what are you doing================");
-        (*(data->alarmAcknowledgePtr))+=1;
-        //Serial.println( *(data->alarmAcknowledgePtr));
+      if(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130*1.2){
+        if( taskInQue[5]==true){
+        (*(data->alarmAcknowledgePtr))+=1; 
+        }
         bpHigh=true;
+        
       }else{
         // reset acknowledge
         //Serial.println("reset=============");
-      
-        *(data->alarmAcknowledgePtr) = 0;
-        bpHigh=false;
+            
+            *(data->alarmAcknowledgePtr) = 0;
+            bpHigh=false;
+            
       }
     }else{
       // reset acknowledge
@@ -882,6 +890,7 @@ void setup() {
   //Initialized buffers
   temperatureRawBuf[0] = 75; pulseRateRawBuf[0] = 0;
   bloodPressRawBuf[0] = 80; bloodPressRawBuf[8] = 80;
+  respirationRateRawBuf[0] = 0;
   
   //Initialized task Measure
   Measure.myTask = Measure_function;
@@ -893,7 +902,7 @@ void setup() {
   MeasureData.bloodPressIndexPtr = &bloodPressIndex;
   MeasureData.pulseRateIndexPtr = &pulseRateIndex;
   MeasureData.id = 5;
-  MeasureData.addFlagPtr = &taskAddFlag[4];
+  MeasureData.addFlagPtr = &taskAddFlag[5];
   Measure.taskDataPtr = &MeasureData;
   taskArray[5] = &Measure;
 
@@ -910,7 +919,7 @@ void setup() {
   ComputeData.bloodPressIndexPtr = &bloodPressIndex;
   ComputeData.pulseRateIndexPtr = &pulseRateIndex;
   ComputeData.id = 4;
-  ComputeData.addFlagPtr = &taskAddFlag[3];
+  ComputeData.addFlagPtr = &taskAddFlag[4];
   Compute.taskDataPtr = &ComputeData;
   taskArray[4] = &Compute;
 
@@ -946,8 +955,8 @@ void setup() {
   WarningAlarmData.bloodPressIndexPtr = &bloodPressIndex;
   WarningAlarmData.pulseRateIndexPtr = &pulseRateIndex;
   WarningAlarmData.id = 3;
-  WarningAlarmData.addFlagPtr = &taskAddFlag[2];
-  WarningAlarmData.addComFlagPtr = &taskAddFlag[6];
+  WarningAlarmData.addFlagPtr = &taskAddFlag[3];
+  WarningAlarmData.addComFlagPtr = &taskAddFlag[7];
   WarningAlarm.taskDataPtr = &WarningAlarmData;
   taskArray[3] = &WarningAlarm;
 
@@ -955,7 +964,7 @@ void setup() {
   Status.myTask = Status_function;
   StatusData.batteryStatePtr = &batteryState;
   StatusData.id = 6;
-  StatusData.addFlagPtr = &taskAddFlag[5];
+  StatusData.addFlagPtr = &taskAddFlag[6];
   Status.taskDataPtr = &StatusData;
   taskArray[6] = &Status;
 
@@ -982,7 +991,7 @@ void setup() {
   CommunicationsData.bloodPressIndexPtr = &bloodPressIndex;
   CommunicationsData.pulseRateIndexPtr = &pulseRateIndex;
   CommunicationsData.id = 7;
-  CommunicationsData.addFlagPtr = &taskAddFlag[6];
+  CommunicationsData.addFlagPtr = &taskAddFlag[7];
   Communications.taskDataPtr = &CommunicationsData;
   taskArray[7] = &Communications;
 
@@ -995,7 +1004,7 @@ void setup() {
   RemoteCommData.initial_val_menuPtr = &initial_val_menu;
   RemoteCommData.initial_val_AnnPtr = &initial_val_Ann;
   RemoteCommData.id = 2;
-  RemoteCommData.addFlagPtr = &taskAddFlag[1];
+  RemoteCommData.addFlagPtr = &taskAddFlag[2];
   RemoteComm.taskDataPtr = &RemoteCommData;
   taskArray[2] = &RemoteComm;
 
@@ -1054,15 +1063,14 @@ void setup() {
 
   tft.fillScreen(BLACK);
 
-  tft.fillRect(0, 320-W, H, W, RED);
-  //tft.fillRect(W, 0, W, W, YELLOW);
+  tft.fillRect(0, 320-W, H, W, GREEN);
+  tft.drawRect(0, 320-W, H, W, WHITE);
   tft.fillRect( 0,320-2*W, H, W, GREEN);
-  //tft.fillRect(W*3, 0, W, W, CYAN);
+  tft.drawRect(0,320-2*W, H, W, WHITE); 
   tft.fillRect(0,320-3*W, H, W, BLUE);
-  //tft.fillRect(W*5, 0, W, W, MAGENTA);
+  tft.drawRect(0, 320-3*W, H, W, WHITE);
   tft.fillRect(0,320-4*W, H, W, WHITE);
- 
-  tft.drawRect(0, 0, H, W, WHITE);
+  tft.drawRect(0, 320-4*W, H, W, WHITE);
   
   pinMode(13, OUTPUT);
 }
