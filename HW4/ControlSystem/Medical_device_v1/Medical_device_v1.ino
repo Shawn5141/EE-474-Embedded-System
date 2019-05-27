@@ -899,8 +899,8 @@ void Status_function(void *uncast_data){
 }
 
 void RemoteComm_function(void *uncast_data){
-  DataStructMeasure* data;
-  data = (DataStructMeasure*)uncast_data;
+  DataStructRemoteComm* data;
+  data = (DataStructRemoteComm*)uncast_data;
   String  serialResponse;
 
   if(Serial.available()){
@@ -1176,7 +1176,7 @@ void loop() {
   }
   //toggle pin after one cycle of task queue
   digitalWrite(taskqueFinishPin, !digitalRead(taskqueFinishPin));
-  ////show execution time for each task in serial monitor
+  /*//show execution time for each task in serial monitor
   message = "";
   for (int i=0; i<numTask; i++)
     message += taskName[i] + ": " + taskTime[i] + " ms\n";
