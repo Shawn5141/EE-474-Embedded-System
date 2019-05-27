@@ -103,8 +103,7 @@ unsigned int pulseRateRawBuf[8], respirationRateRawBuf[8];
 unsigned char tempIndex=0, bloodPressIndex=0, pulseRateIndex=0, respirationRateIndex=0;
 //Display
 unsigned char tempCorrectedBuf[8];
-unsigned int bloodPressCorrectedBuf[16];
-unsigned char pulseRateCorrectedBuf[8], respirationRateCorrectedBuf[8];
+unsigned int bloodPressCorrectedBuf[16], pulseRateCorrectedBuf[8], respirationRateCorrectedBuf[8];
 //Status
 unsigned short batteryState=200;
 //Alarms
@@ -143,9 +142,9 @@ unsigned long taskTime[numTask]; //store the execution time of each task
 //Task Measure's data
 typedef struct DataStructMeasure{
   unsigned char id;
-  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr;
+  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr, *respirationRateRawBufPtr;
   unsigned short *measurementSelectionPtr;
-  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
+  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr, *respirationRateIndexPtr;
   bool *addFlagPtr;
 }DataStructMeasure;
 DataStructMeasure MeasureData;
@@ -153,12 +152,11 @@ DataStructMeasure MeasureData;
 //Task Compute's data
 typedef struct DataStructCompute{
   unsigned char id;
-  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr;
+  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr, *respirationRateRawBufPtr;;
   unsigned char *tempCorrectedBufPtr;
-  unsigned int *bloodPressCorrectedBufPtr;
-  unsigned char *pulseRateCorrectedBufPtr;
+  unsigned int *bloodPressCorrectedBufPtr, *pulseRateCorrectedBufPtr, *respirationRateCorrectedBufPtr;
   unsigned short *measurementSelectionPtr;
-  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
+  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr, *respirationRateIndexPtr;
   bool *addFlagPtr;
 }DataStructCompute;
 DataStructCompute ComputeData;
@@ -167,11 +165,10 @@ DataStructCompute ComputeData;
 typedef struct DataStructDisplay{
   unsigned char id;
   unsigned char *tempCorrectedBufPtr;
-  unsigned int *bloodPressCorrectedBufPtr;
-  unsigned char *pulseRateCorrectedBufPtr;
+  unsigned int *bloodPressCorrectedBufPtr, *pulseRateCorrectedBufPtr, *respirationRateCorrectedBufPtr;
   unsigned short *batteryStatePtr;
   unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr,*AnnSelectionPtr;
-  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
+  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr, *respirationRateIndexPtr;
   unsigned short *initial_val_menuPtr, *initial_val_AnnPtr;
   bool *addFlagPtr;
 }DataStructDisplay;
@@ -180,9 +177,9 @@ DataStructDisplay DisplayData;
 //Task WarningAlarm's data
 typedef struct DataStructWarningAlarm{
   unsigned char id;
-  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr;
+  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr, *respirationRateRawBufPtr;
   unsigned short *batteryStatePtr, *alarmAcknowledgePtr,*AnnSelectionPtr;
-  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
+  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr, *respirationRateIndexPtr;
   bool *addFlagPtr, *addComFlagPtr;
 }DataStructWarningAlarm;
 DataStructWarningAlarm WarningAlarmData;
@@ -198,7 +195,7 @@ DataStructStatus StatusData;
 //Task TFTKeypad's data
 typedef struct DataStructTFTKeypad{
   unsigned char id;
-  unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr,*AnnSelectionPtr;
+  unsigned short *functionSelectPtr, *measurementSelectionPtr, *alarmAcknowledgePtr, *AnnSelectionPtr;
   bool *addFlagPtr;
   unsigned short *initial_val_menuPtr, *initial_val_AnnPtr;
 }DataStructTFTKeypad;
@@ -207,10 +204,10 @@ DataStructTFTKeypad TFTKeypadData;
 //Task Communications's data
 typedef struct DataStructCommunications{
   unsigned char id;
-  unsigned char *tempCorrectedBufPtr, *pulseRateCorrectedBufPtr;
-  unsigned int *bloodPressCorrectedBufPtr;
+  unsigned char *tempCorrectedBufPtr;
+  unsigned int *bloodPressCorrectedBufPtr, *pulseRateCorrectedBufPtr, *respirationRateCorrectedBufPtr;
   unsigned short *batteryStatePtr;
-  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr;
+  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr, *respirationRateIndexPtr;
   bool *addFlagPtr;
 }DataStructCommunications;
 DataStructCommunications CommunicationsData;
@@ -892,10 +889,12 @@ void setup() {
   MeasureData.temperatureRawBufPtr = temperatureRawBuf;
   MeasureData.bloodPressRawBufPtr = bloodPressRawBuf;
   MeasureData.pulseRateRawBufPtr = pulseRateRawBuf;
+  MeasureData.respirationRateRawBufPtr = respirationRateRawBuf;
   MeasureData.measurementSelectionPtr = &measurementSelection;
   MeasureData.tempIndexPtr = &tempIndex;
   MeasureData.bloodPressIndexPtr = &bloodPressIndex;
   MeasureData.pulseRateIndexPtr = &pulseRateIndex;
+  MeasureData.respirationRateIndexPtr = &respirationRateIndex;
   MeasureData.id = 5;
   MeasureData.addFlagPtr = &taskAddFlag[5];
   Measure.taskDataPtr = &MeasureData;
@@ -906,13 +905,16 @@ void setup() {
   ComputeData.temperatureRawBufPtr = temperatureRawBuf;
   ComputeData.bloodPressRawBufPtr = bloodPressRawBuf;
   ComputeData.pulseRateRawBufPtr = pulseRateRawBuf;
+  ComputeData.respirationRateRawBufPtr = respirationRateRawBuf;
   ComputeData.tempCorrectedBufPtr = tempCorrectedBuf;
   ComputeData.bloodPressCorrectedBufPtr = bloodPressCorrectedBuf;
   ComputeData.pulseRateCorrectedBufPtr = pulseRateCorrectedBuf;
+  ComputeData.respirationRateCorrectedBufPtr = respirationRateCorrectedBuf;
   ComputeData.measurementSelectionPtr = &measurementSelection;
   ComputeData.tempIndexPtr = &tempIndex;
   ComputeData.bloodPressIndexPtr = &bloodPressIndex;
   ComputeData.pulseRateIndexPtr = &pulseRateIndex;
+  ComputeData.respirationRateIndexPtr = &respirationRateIndex;
   ComputeData.id = 4;
   ComputeData.addFlagPtr = &taskAddFlag[4];
   Compute.taskDataPtr = &ComputeData;
@@ -923,6 +925,7 @@ void setup() {
   DisplayData.tempCorrectedBufPtr = tempCorrectedBuf;
   DisplayData.bloodPressCorrectedBufPtr = bloodPressCorrectedBuf;
   DisplayData.pulseRateCorrectedBufPtr = pulseRateCorrectedBuf;
+  DisplayData.respirationRateCorrectedBufPtr = respirationRateCorrectedBuf;
   DisplayData.batteryStatePtr = &batteryState;
   DisplayData.measurementSelectionPtr = &measurementSelection;
   DisplayData.alarmAcknowledgePtr = &alarmAcknowledge;
@@ -931,6 +934,7 @@ void setup() {
   DisplayData.tempIndexPtr = &tempIndex;
   DisplayData.bloodPressIndexPtr = &bloodPressIndex;
   DisplayData.pulseRateIndexPtr = &pulseRateIndex;
+  DisplayData.respirationRateIndexPtr = &respirationRateIndex;
   DisplayData.initial_val_menuPtr = &initial_val_menu;
   DisplayData.initial_val_AnnPtr = &initial_val_Ann;
   DisplayData.id = 0;
@@ -943,12 +947,14 @@ void setup() {
   WarningAlarmData.temperatureRawBufPtr = temperatureRawBuf;
   WarningAlarmData.bloodPressRawBufPtr = bloodPressRawBuf;
   WarningAlarmData.pulseRateRawBufPtr = pulseRateRawBuf;
+  WarningAlarmData.respirationRateRawBufPtr = respirationRateRawBuf;
   WarningAlarmData.batteryStatePtr = &batteryState;
   WarningAlarmData.alarmAcknowledgePtr = &alarmAcknowledge;
   WarningAlarmData.AnnSelectionPtr=&AnnSelection;
   WarningAlarmData.tempIndexPtr = &tempIndex;
   WarningAlarmData.bloodPressIndexPtr = &bloodPressIndex;
   WarningAlarmData.pulseRateIndexPtr = &pulseRateIndex;
+  WarningAlarmData.respirationRateIndexPtr = &respirationRateIndex;
   WarningAlarmData.id = 3;
   WarningAlarmData.addFlagPtr = &taskAddFlag[3];
   WarningAlarmData.addComFlagPtr = &taskAddFlag[7];
@@ -981,10 +987,12 @@ void setup() {
   CommunicationsData.tempCorrectedBufPtr = tempCorrectedBuf;
   CommunicationsData.bloodPressCorrectedBufPtr = bloodPressCorrectedBuf;
   CommunicationsData.pulseRateCorrectedBufPtr = pulseRateCorrectedBuf;
+  CommunicationsData.respirationRateCorrectedBufPtr = respirationRateCorrectedBuf;
   CommunicationsData.batteryStatePtr = &batteryState;
   CommunicationsData.tempIndexPtr = &tempIndex;
   CommunicationsData.bloodPressIndexPtr = &bloodPressIndex;
   CommunicationsData.pulseRateIndexPtr = &pulseRateIndex;
+  CommunicationsData.respirationRateIndexPtr = &respirationRateIndex;
   CommunicationsData.id = 7;
   CommunicationsData.addFlagPtr = &taskAddFlag[7];
   Communications.taskDataPtr = &CommunicationsData;
