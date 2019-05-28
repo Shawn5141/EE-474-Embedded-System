@@ -502,7 +502,7 @@ void text_for_display(DataStructDisplay* data){
    tft.setCursor(0, 60);
    tft.setTextSize(2);
    tft.setTextColor(WHITE);
-   tft.print("Blood Pressure        ");
+   tft.print("Blood Pressure            ");
   
    /*
    if (bpOutOfRange==1 && *(data->alarmAcknowledgePtr)<5){
@@ -516,7 +516,6 @@ void text_for_display(DataStructDisplay* data){
    
    //tft.setTextSize(1);
    //tft.println("        ");
-   tft.println(*(data->alarmAcknowledgePtr));
    tft.setTextSize(2);
    tft.print(" Systolic : ");
    //Serial.print("out of range value");
@@ -533,7 +532,7 @@ void text_for_display(DataStructDisplay* data){
         if (start_time_bp-end_time_bp>1000){
           //tft.print("          ");
           end_time_bp=millis()+1000;
-          Serial.print(end_time_bp);
+          //Serial.print(end_time_bp);
           tft.setTextColor(ORANGE,BLACK);
          }
          else{    
@@ -601,9 +600,9 @@ void text_for_display(DataStructDisplay* data){
        if (tempOutOfRange==1){
         start_time_tp=millis();
           if (end_time_tp!=0){
-            Serial.print("temp====start and subtract");
+            //Serial.print("temp====start and subtract");
             //Serial.println(end_time_tp);
-            Serial.println(start_time_tp-end_time_tp);
+            //Serial.println(start_time_tp-end_time_tp);
             if (start_time_tp-end_time_tp>1000){
               
 
@@ -643,9 +642,9 @@ void text_for_display(DataStructDisplay* data){
        if (pulseOutOfRange==1){
         start_time_pr=millis();
           if (end_time_pr!=0){
-            Serial.print("temp====start and subtract");
+            //Serial.print("temp====start and subtract");
             
-            Serial.println(start_time_pr-end_time_pr);
+            //Serial.println(start_time_pr-end_time_pr);
             if (start_time_pr-end_time_pr>2000){
               
 
@@ -893,7 +892,7 @@ void TFTKeypad_function(void *uncast_data){
           
           if(*(data->AnnSelectionPtr)==1){
               *(data->AnnSelectionPtr)=0;
-              Serial.println("ann=0");
+              //Serial.println("ann=0");
           }else{
             
           *(data->AnnSelectionPtr)=1;
