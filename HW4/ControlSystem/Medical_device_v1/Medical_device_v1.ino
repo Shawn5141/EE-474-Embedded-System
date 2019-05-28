@@ -111,7 +111,7 @@ unsigned char bpOutOfRange=0, tempOutOfRange=0, pulseOutOfRange=0, rrOutOfRange=
 //Warning
 bool bpHigh=false, tempHigh=false, pulseLow=false, rrLow=false, rrHigh=false;
 //TFT Keypad
-unsigned short functionSelect=0, measurementSelection=0, alarmAcknowledge=0,AnnSelection=0;
+unsigned short functionSelect=0, measurementSelection=0, alarmAcknowledge=4,AnnSelection=0;
 unsigned short initial_val_menu=0, initial_val_Ann=0;
 unsigned long end_time_bp =0,start_time_bp=0;
 unsigned long end_time_tp =0,start_time_tp=0;
@@ -404,10 +404,10 @@ void bar_text(){
    tft.setRotation(1);
    tft.setCursor(10, 10);
    tft.setTextSize(2);
-   tft.setTextColor(WHITE,GREEN);
+   tft.setTextColor(BLACK,GREEN);
    tft.println("Menu");
    tft.setCursor(90, 10);
-   tft.setTextColor(WHITE,GREEN);
+   tft.setTextColor(BLACK,GREEN);
    tft.print("Ann.");
    tft.setRotation(2);
   }
@@ -424,10 +424,10 @@ void bar_text1(){
    tft.setRotation(1);
    tft.setCursor(10, 10);
    tft.setTextSize(2);
-   tft.setTextColor(WHITE,GREEN);
+   tft.setTextColor(BLACK,GREEN);
    tft.println("Menu");
    tft.setCursor(90, 10);
-   tft.setTextColor(WHITE,RED);
+   tft.setTextColor(BLACK,RED);
    tft.print("Ann.");
    tft.setRotation(2);
   }
@@ -443,6 +443,8 @@ void Measure_text(){
    tft.print("Temp.");
    tft.setCursor(10, 140);
    tft.print("Pulse");
+    tft.setCursor(10, 180);
+   tft.print("Raspir");
    tft.setRotation(2);
   }
 
@@ -475,6 +477,15 @@ void Measure_text3(){
    tft.setRotation(2);
   }
 
+void Measure_text4(){
+   tft.setRotation(1);
+   tft.setTextSize(2);
+   tft.setTextColor(BLACK,CYAN);
+    tft.setCursor(10, 180);
+   tft.print("Raspir");
+   tft.setRotation(2);
+  }
+
 void Acknoledge_text(){
    tft.setRotation(1);
    tft.setTextSize(2);
@@ -491,14 +502,25 @@ void text_for_display(DataStructDisplay* data){
    tft.setCursor(0, 60);
    tft.setTextSize(2);
    tft.setTextColor(WHITE);
-   tft.print("Blood Pressure       ");
+   tft.print("Blood Pressure        ");
+  
+   /*
+   if (bpOutOfRange==1 && *(data->alarmAcknowledgePtr)<5){
+     tft.setTextColor(RED,BLACK);
+     tft.print("  Count ");
+     tft.println(*(data->alarmAcknowledgePtr));
+   }else{
+    tft.print("        ");
+    
+    }*/
+   
+   //tft.setTextSize(1);
+   //tft.println("        ");
    tft.println(*(data->alarmAcknowledgePtr));
-   tft.setTextSize(1);
-   tft.println("        ");
    tft.setTextSize(2);
    tft.print(" Systolic : ");
-   
-   
+   //Serial.print("out of range value");
+   //Serial.println(bpOutOfRange);
    if (bpOutOfRange==1 && *(data->alarmAcknowledgePtr)>5){
       tft.setTextColor(RED,BLACK);
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
@@ -506,8 +528,8 @@ void text_for_display(DataStructDisplay* data){
    else if(bpOutOfRange==1){
       start_time_bp=millis();
       if (end_time_bp!=0){
-        Serial.print("=================");
-        Serial.println(start_time_bp-end_time_bp);
+        //Serial.print("=================");
+        //Serial.println(start_time_bp-end_time_bp);
         if (start_time_bp-end_time_bp>1000){
           //tft.print("          ");
           end_time_bp=millis()+1000;
@@ -518,12 +540,13 @@ void text_for_display(DataStructDisplay* data){
           
           //tft.drawRect(143,84,W,H,BLACK)
           end_time_bp=millis();
-          Serial.print(end_time_bp);
+          //Serial.print(end_time_bp);
           }
       }else{
         //tft.setCursor(100, 60);
         end_time_bp=millis();
-        Serial.print(end_time_bp);
+       // Serial.print("bp time====");
+       // Serial.print(end_time_bp);
         }
       
       tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
@@ -536,118 +559,149 @@ void text_for_display(DataStructDisplay* data){
       tft.println(" mmHg   ");};
   
     
-   tft.setTextColor(WHITE);
-   tft.setTextSize(1);
-   tft.println("        ");
-   tft.setTextSize(2);
-   tft.print(" Diastolic :");
-   if (bpOutOfRange==1){
-      start_time_bp=millis();
-      if (end_time_bp!=0){
-        Serial.print("=================");
-        Serial.println(start_time_bp-end_time_bp);
-        if (start_time_bp-end_time_bp>1000){
-          //tft.print("          ");
-          end_time_bp=millis()+1000;
-          Serial.print(end_time_bp);
-          tft.setTextColor(ORANGE,BLACK);
-         }
-         else{    
-          
-          tft.drawRect(143,104,W,H,BLACK);
-          end_time_bp=millis();
-          Serial.print(end_time_bp);
-          }
-      }else{
-        //tft.setCursor(100, 60);
-        end_time_bp=millis();
-        Serial.print(end_time_bp);
+       tft.setTextColor(WHITE);
+       tft.setTextSize(1);
+       tft.println("        ");
+       tft.setTextSize(2);
+       tft.print(" Diastolic :");
+       if (bpOutOfRange==1){
+          start_time_bp=millis();
+          if (end_time_bp!=0){
+            //Serial.print("=================");
+            //Serial.println(start_time_bp-end_time_bp);
+            if (start_time_bp-end_time_bp>1000){
+              //tft.print("          ");
+              end_time_bp=millis()+1000;
+              //Serial.print(end_time_bp);
+              tft.setTextColor(ORANGE,BLACK);
+             }
+             else{    
+
+              tft.drawRect(143,104,W,H,BLACK);
+              end_time_bp=millis();
+              //Serial.print(end_time_bp);
+              }
+          }else{
+            //tft.setCursor(100, 60);
+            end_time_bp=millis();
+            //Serial.print(end_time_bp);
+            }
+          tft.print(*(data->bloodPressCorrectedBufPtr +8+ *(data->bloodPressIndexPtr)));
+          tft.println(" mmHg ");}
+       else{
+          tft.setTextColor(GREEN,BLACK);
+          tft.print(*(data->bloodPressCorrectedBufPtr + 8+*(data->bloodPressIndexPtr)));
+          tft.println(" mmHg  ");};
+
+       tft.setTextColor(WHITE);
+       tft.setTextSize(1);
+       tft.println("        ");
+       tft.setTextSize(2);
+       tft.print("Temperature:    ");
+       if (tempOutOfRange==1){
+        start_time_tp=millis();
+          if (end_time_tp!=0){
+            Serial.print("temp====start and subtract");
+            //Serial.println(end_time_tp);
+            Serial.println(start_time_tp-end_time_tp);
+            if (start_time_tp-end_time_tp>1000){
+              
+
+              tft.setTextColor(ORANGE,BLACK);
+              end_time_tp=millis();
+             }else{
+              
+              
+             }
+             
+              
+              
+
+            
+          }else{
+
+            
+             end_time_tp=millis();
+            }
+
+
+        //tft.setTextColor(ORANGE,BLACK);
         }
-      tft.print(*(data->bloodPressCorrectedBufPtr +8+ *(data->bloodPressIndexPtr)));
-      tft.println(" mmHg ");}
-   else{
-      tft.setTextColor(GREEN,BLACK);
-      tft.print(*(data->bloodPressCorrectedBufPtr + 8+*(data->bloodPressIndexPtr)));
-      tft.println(" mmHg  ");};
-   
-   tft.setTextColor(WHITE);
-   tft.setTextSize(1);
-   tft.println("        ");
-   tft.setTextSize(2);
-   tft.print("Temperature:    ");
-   if (tempOutOfRange==1){
-    start_time_tp=millis();
-      if (end_time_tp!=0){
-        Serial.print("temp====start and subtract");
-        //Serial.println(end_time_tp);
-        Serial.println(start_time_tp-end_time_tp);
-        if (start_time_tp-end_time_tp>2000){
-          end_time_tp=millis()+2000;
-          
-          tft.setTextColor(ORANGE,BLACK);
-         }
-         else{    
-          end_time_tp=millis();
-          
-          }
-      }else{
+       else{tft.setTextColor(GREEN,BLACK);};
+       tft.print(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
+       tft.setTextSize(1);
+       tft.print((char)223);
+       tft.setTextSize(2);
+       tft.println("C  ");
+
+
+       tft.setTextColor(WHITE);
+       tft.setTextSize(1);
+       tft.println("        ");
+       tft.setTextSize(2);
+       tft.print("Pulse Rate:     ");
+       if (pulseOutOfRange==1){
+        start_time_pr=millis();
+          if (end_time_pr!=0){
+            Serial.print("temp====start and subtract");
+            
+            Serial.println(start_time_pr-end_time_pr);
+            if (start_time_pr-end_time_pr>2000){
+              
+
+              tft.setTextColor(ORANGE,BLACK);
+              end_time_pr=millis();
+             }
+            // else{    
+              
+              
+
+             // }
+          }else{
+
+            end_time_pr=millis();
+
+            }
+
+
+
+
         
-        end_time_tp=millis();
-        
-        }
-    
-    
-    //tft.setTextColor(ORANGE,BLACK);
-    }
-   else{tft.setTextColor(GREEN,BLACK);};
-   tft.print(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
-   tft.setTextSize(1);
-   tft.print((char)223);
-   tft.setTextSize(2);
-   tft.println("C  ");
+        //tft.setTextColor(ORANGE,BLACK);}
+       }
+       else{tft.setTextColor(GREEN,BLACK);};
+       tft.print(*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr)));
+       tft.println(" BPM ");
 
-  
-   tft.setTextColor(WHITE);
-   tft.setTextSize(1);
-   tft.println("        ");
-   tft.setTextSize(2);
-   tft.print("Pulse Rate:     ");
-   if (pulseOutOfRange==1){
-    tft.setTextColor(ORANGE,BLACK);}
-   else{tft.setTextColor(GREEN,BLACK);};
-   tft.print(*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr)));
-   tft.println(" BPM ");
+      tft.setTextColor(WHITE);
+       tft.setTextSize(1);
+       tft.println("        ");
+       tft.setTextSize(2);
+       tft.print("Raspiration:     ");
+       if (rrOutOfRange==1){
+        tft.setTextColor(ORANGE,BLACK);}
+       else{tft.setTextColor(GREEN,BLACK);};
+       tft.print(*(data->respirationRateCorrectedBufPtr + *(data->respirationRateIndexPtr)));
+       tft.println(" RR ");
 
-  tft.setTextColor(WHITE);
-   tft.setTextSize(1);
-   tft.println("        ");
-   tft.setTextSize(2);
-   tft.print("Raspiration:     ");
-   if (rrOutOfRange==1){
-    tft.setTextColor(ORANGE,BLACK);}
-   else{tft.setTextColor(GREEN,BLACK);};
-   tft.print(*(data->respirationRateCorrectedBufPtr + *(data->respirationRateIndexPtr)));
-   tft.println(" RR ");
-   
 
-   
-   tft.setTextColor(WHITE);
-   tft.setTextSize(1);
-   tft.println("        ");
-   tft.setTextSize(2);
-   tft.print("Battery status: ");
-   if (batteryState<=40){tft.setTextColor(ORANGE,BLACK);}
-   else{tft.setTextColor(GREEN,BLACK);};
-   tft.print(*(data->batteryStatePtr));
-   tft.println("   ");
 
-   tft.println();
-   tft.println();
-   tft.setRotation(2);
+       tft.setTextColor(WHITE);
+       tft.setTextSize(1);
+       tft.println("        ");
+       tft.setTextSize(2);
+       tft.print("Battery status: ");
+       if (batteryState<=40){tft.setTextColor(ORANGE,BLACK);}
+       else{tft.setTextColor(GREEN,BLACK);};
+       tft.print(*(data->batteryStatePtr));
+       tft.println("   ");
+
+       tft.println();
+       tft.println();
+       tft.setRotation(2);
 
  
 }
-
 void Display_function(void *uncast_data){
   DataStructDisplay* data;
   data=(DataStructDisplay*)uncast_data;
@@ -655,8 +709,7 @@ void Display_function(void *uncast_data){
       bar_text();
   }else{
      bar_text1();
-     Serial.print("Ptr for ann");
-     Serial.println(*(data->AnnSelectionPtr));
+     
     }
 
   
@@ -666,48 +719,30 @@ void Display_function(void *uncast_data){
         tft.setRotation(2);
         //tft.fillRect(0,320-2*W, H, W, GREEN);
         tft.fillRect(H+5,0, tft.width(),tft.height(), BLACK);
-        *(data->initial_val_menuPtr)=0;
+        
         bar_text();
         text_for_display(data);
+        *(data->initial_val_menuPtr)=0;
         *(data->initial_val_AnnPtr)=1;
     }else{
     //Ann Select diagram second time enter
 
 
-        if (*(data->AnnSelectionPtr)==1){
-          tft.fillRect(H+5,0, tft.width(),tft.height(), BLACK);
-          tft.fillRect(H+5,320-2*W+5, 1*H-5, W-5, CYAN);
-          tft.drawRect(H+5,320-2*W+5, 1*H-5, W-5, WHITE);
-          Acknoledge_text();
-          }
-        else{
-          if (*(data->AnnSelectionPtr)==2){
-              tft.fillRect(H+5,0, tft.width(),tft.height(), BLACK);
-              text_for_display(data);
-          }else{
-              //Change here for 
-              text_for_display(data);
-              }
+        if (*(data->alarmAcknowledgePtr)>5 && *(data->AnnSelectionPtr)==1){
+            //Serial.print("greater than 5 and ret==================");
+            *(data->alarmAcknowledgePtr)=0;
+            tft.fillRect(0,320-2*W, H, W, GREEN);
+            
           
          }
-  
-  
-      
+       
         bar_text();
-      
+        text_for_display(data);
       
       }
 
-      if (*(data->alarmAcknowledgePtr)>5 && *(data->AnnSelectionPtr)==2){
-      //Serial.print("greater than 5 and ret==================");
-      *(data->alarmAcknowledgePtr)=0;
-      
-      }
-      *(data->AnnSelectionPtr)=0;
-      //Serial.println("display screen");
     
   }else{
-
     
     tft.setRotation(2);
     tft.drawRect(0,320-3*W, H, W, WHITE);
@@ -716,9 +751,7 @@ void Display_function(void *uncast_data){
     
     if(*(data->measurementSelectionPtr)==1){
       
-      //Menu Select diagram
-
-     
+      //Menu Select diagra   
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, WHITE);
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
@@ -743,6 +776,15 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
       Measure_text();
       Measure_text3();
+
+    }else if(*(data->measurementSelectionPtr)==4){
+
+      //Menu Select diagram
+      tft.drawRect(H+5,320-W+5, 4*H-5, W-5, WHITE);
+      tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
+      Measure_text();
+      Measure_text4();
       
 
     }else {
@@ -753,9 +795,11 @@ void Display_function(void *uncast_data){
       tft.fillRect(H+5,320-W, 1*H, W, CYAN);
       tft.fillRect(H+5,320-W, 2*H, W, CYAN);
       tft.fillRect(H+5,320-W, 3*H, W, CYAN);
+      tft.fillRect(H+5,320-W, 4*H, W, CYAN);
       tft.drawRect(H+5,320-W, 1*H, W, WHITE);
       tft.drawRect(H+5,320-W, 2*H, W,  WHITE);
       tft.drawRect(H+5,320-W, 3*H, W, WHITE);
+      tft.drawRect(H+5,320-W, 4*H, W, WHITE);
       bar_text();
       Measure_text();
       *(data->initial_val_menuPtr)=1;
@@ -769,7 +813,7 @@ void Display_function(void *uncast_data){
 
       }
       initial_val_Ann=0;
-      
+    
     
     
 
@@ -844,26 +888,23 @@ void TFTKeypad_function(void *uncast_data){
 
       if(*(data->functionSelectPtr)==0){
         
-        if (p.x>H && p.x < 2*H && p.y> 2*W && p.y<3*W) {
-
-
-          Serial.print("=====================");
-          Serial.println(*(data->AnnSelectionPtr));
+        if ( p.x < H && p.y> 2*W && p.y<3*W) {
+         
           
-          if(*(data->AnnSelectionPtr)==2){
+          if(*(data->AnnSelectionPtr)==1){
               *(data->AnnSelectionPtr)=0;
               Serial.println("ann=0");
           }else{
-            Serial.println("ann=2");
-          *(data->AnnSelectionPtr)=2;
-          *(data->alarmAcknowledgePtr)=1;
+            
+          *(data->AnnSelectionPtr)=1;
+       
           }  
+
+        }
                   
               
          
-        }else if(p.x < H && p.y> 2*W && p.y<3*W){
-              *(data->AnnSelectionPtr)=1;
-        }
+        
 
       }else if (p.y > tft.height()- Measure_Select_width){
         if (p.x>H && p.x<Measure_Select_height+H){
@@ -875,6 +916,9 @@ void TFTKeypad_function(void *uncast_data){
           
         }else if(p.x>H+2*Measure_Select_height && p.x<3*Measure_Select_height+H){
           *(data->measurementSelectionPtr)=3;
+
+        }else if(p.x>H+3*Measure_Select_height && p.x<4*Measure_Select_height+H){
+          *(data->measurementSelectionPtr)=4;
           
         }else if(p.x<H){
            *(data->measurementSelectionPtr)=0;
@@ -883,7 +927,7 @@ void TFTKeypad_function(void *uncast_data){
           
 
       }   
-    }
+  }
 
 
   unsigned long end_time=millis();
@@ -893,6 +937,8 @@ void TFTKeypad_function(void *uncast_data){
   }
 
 }
+
+
 
 void WarningAlarm_function(void *uncast_data){
   DataStructWarningAlarm * data;
@@ -1189,6 +1235,7 @@ void setup() {
       identifier=0x9341;
        Serial.println(F("Found 0x9341 LCD driver"));
   }else {
+    
     Serial.print(F("Unknown LCD driver chip: "));
     Serial.println(identifier, HEX);
     Serial.println(F("If using the Elegoo 2.8\" TFT Arduino shield, the line:"));
@@ -1210,9 +1257,9 @@ void setup() {
   tft.drawRect(0, 320-W, H, W, WHITE);
   tft.fillRect( 0,320-2*W, H, W, GREEN);
   tft.drawRect(0,320-2*W, H, W, WHITE); 
-  tft.fillRect(0,320-3*W, H, W, BLUE);
+  tft.fillRect(0,320-3*W, H, W, GREEN);
   tft.drawRect(0, 320-3*W, H, W, WHITE);
-  tft.fillRect(0,320-4*W, H, W, WHITE);
+  tft.fillRect(0,320-4*W, H, W, GREEN);
   tft.drawRect(0, 320-4*W, H, W, WHITE);
   
   pinMode(13, OUTPUT);
