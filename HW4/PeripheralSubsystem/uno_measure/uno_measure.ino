@@ -43,19 +43,27 @@ byte pressure_count_interrupt, last_pressure_count_interrupt = HIGH;
 String whichTask;
 String measureData = "";
 
+// pin setup
+int pulse_pin = 2;
+int respiration_pin = 3;
+int pressure_switch_pin = 4;
+int pressure_count_pin = 5;
+//String temperature_pin = "A0";
+
 // set up serial port
 void setup(){
   pinMode(13, OUTPUT);
   Serial.begin(2000000);
   Serial.setTimeout(5);
   // pulse rate
-  pinMode(2, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(2), pulse_count, CHANGE);
+  pinMode(pulse_pin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(pulse_pin), pulse_count, RISING);
   // respiration
-  pinMode(3, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(3), respiration_count, CHANGE);
-  pinMode(4, INPUT_PULLUP);
-  pinMode(5, INPUT_PULLUP);
+  pinMode(respiration_pin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(respiration_pin), respiration_count, RISING);
+  pinMode(pressure_switch_pin, INPUT_PULLUP);
+  pinMode(pressure_count_pin, INPUT_PULLUP);
+  pinMode(A0, INPUT);
 }
 
 // main loop
@@ -65,7 +73,7 @@ void loop(){
   // software interrupt
   pressure_switch_interrupt = digitalRead(4);
   pressure_count_interrupt = digitalRead(5);
-  delay(30);
+  delay(5);
   if(last_pressure_switch_interrupt != pressure_switch_interrupt){
     pressure_switch();
   }
@@ -107,23 +115,28 @@ void loop(){
 }
 
 unsigned int get_temperatureRaw(){
-  // before temperatureRaw exceed 50
-  if( temperatureRaw_flip ){
-    if( temperatureRaw_count > 0 ) temperatureRaw += 2;
-    else temperatureRaw -= 1;
+//  // before temperatureRaw exceed 50
+//  if( temperatureRaw_flip ){
+//    if( temperatureRaw_count > 0 ) temperatureRaw += 2;
+//    else temperatureRaw -= 1;
+//
+//    if( temperatureRaw > 50 ) temperatureRaw_flip = false; 
+//  }
+//  // before temperatureRaw lower than 15
+//  else{
+//    if( temperatureRaw_count > 0 ) temperatureRaw -= 2;
+//    else temperatureRaw += 1;
+//
+//    if( temperatureRaw < 15 ) temperatureRaw_flip = true; 
+//  }
+//
+//  // flip counter
+//  temperatureRaw_count *= -1 ;
+//  return temperatureRaw;
 
-    if( temperatureRaw > 50 ) temperatureRaw_flip = false; 
-  }
-  // before temperatureRaw lower than 15
-  else{
-    if( temperatureRaw_count > 0 ) temperatureRaw -= 2;
-    else temperatureRaw += 1;
-
-    if( temperatureRaw < 15 ) temperatureRaw_flip = true; 
-  }
-
-  // flip counter
-  temperatureRaw_count *= -1 ;
+  temperatureRaw = analogRead(A0)/1024*35+15;
+  // 0 - 1023 : 15 - 50
+  // 1:? = 1023:
   return temperatureRaw;
 }
 

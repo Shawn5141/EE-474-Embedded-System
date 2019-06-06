@@ -10,7 +10,7 @@ void setup(){ //same as arduino program
 
   size(320, 650);    //window size, (width, height)
 
-  port = new Serial(this, "COM4", 2000000);  //i have connected arduino to com3, it would be different in linux and mac os
+  port = new Serial(this, "/dev/ttyACM0", 2000000);  //i have connected arduino to com3, it would be different in linux and mac os
   
   //lets add buton to empty window
   
