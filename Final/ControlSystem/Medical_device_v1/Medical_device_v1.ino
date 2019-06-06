@@ -477,102 +477,113 @@ void Measure_text3(){
    tft.setRotation(2);
   }
 
-void Measure_text4(){
-   tft.setRotation(1);
-   tft.setTextSize(2);
-   tft.setTextColor(BLACK,CYAN);
-    tft.setCursor(10, 180);
-   tft.print("Raspir");
-   tft.setRotation(2);
+void measure_text4(){
+   tft.setrotation(1);
+   tft.settextsize(2);
+   tft.settextcolor(black,cyan);
+    tft.setcursor(10, 180);
+   tft.print("raspir");
+   tft.setrotation(2);
   }
 
-void Acknoledge_text(){
-   tft.setRotation(1);
-   tft.setTextSize(2);
-   tft.setTextColor(WHITE,CYAN);
-    tft.setCursor(10+Measure_Select_width, 60);
-   tft.print("Ack.");
-   tft.setRotation(2);
+void Measure_text5(){
+    tft.setRotation(1);
+	tft.setTextSize(2);
+	tftsetTextColor(BLACK,CYAN);
+	tft.setCursor(10,220);
+	tft.print("EKG");
+	tft.setRotation(2);
+} 
+
+
+
+void acknoledge_text(){
+   tft.setrotation(1);
+   tft.settextsize(2);
+   tft.settextcolor(white,cyan);
+    tft.setcursor(10+measure_select_width, 60);
+   tft.print("ack.");
+   tft.setrotation(2);
   }
 
-//The text displayed in main page
-void text_for_display(DataStructDisplay* data){
+//the text displayed in main page
+void text_for_display(datastructdisplay* data){
    start_time=millis();
-   tft.setRotation(1);
-   tft.setCursor(0, 60);
-   tft.setTextSize(2);
-   tft.setTextColor(WHITE);
-   tft.print("Blood Pressure            ");
+   tft.setrotation(1);
+   tft.setcursor(0, 60);
+   tft.settextsize(2);
+   tft.settextcolor(white);
+   tft.print("blood pressure            ");
   
    /*
-   if (bpOutOfRange==1 && *(data->alarmAcknowledgePtr)<5){
-     tft.setTextColor(RED,BLACK);
-     tft.print("  Count ");
-     tft.println(*(data->alarmAcknowledgePtr));
+   if (bpoutofrange==1 && *(data->alarmacknowledgeptr)<5){
+     tft.settextcolor(red,black);
+     tft.print("  count ");
+     tft.println(*(data->alarmacknowledgeptr));
    }else{
     tft.print("        ");
     
     }*/
    
-   //tft.setTextSize(1);
+   //tft.settextsize(1);
    //tft.println("        ");
-   tft.setTextSize(2);
-   tft.print(" Systolic : ");
-   //Serial.print("out of range value");
-   //Serial.println(bpOutOfRange);
-   if (bpOutOfRange==1 && *(data->alarmAcknowledgePtr)>5){
-      tft.setTextColor(RED,BLACK);
-      tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
-      tft.println(" mmHg   ");}
-   else if(bpOutOfRange==1){
+   tft.settextsize(2);
+   tft.print(" systolic : ");
+   //serial.print("out of range value");
+   //serial.println(bpoutofrange);
+   if (bpoutofrange==1 && *(data->alarmacknowledgeptr)>5){
+      tft.settextcolor(red,black);
+      tft.print(*(data->bloodpresscorrectedbufptr + *(data->bloodpressindexptr)));
+      tft.println(" mmhg   ");}
+   else if(bpoutofrange==1){
       start_time_bp=millis();
       if (end_time_bp!=0){
-        //Serial.print("=================");
-        //Serial.println(start_time_bp-end_time_bp);
+        //serial.print("=================");
+        //serial.println(start_time_bp-end_time_bp);
         if (start_time_bp-end_time_bp>1000){
           //tft.print("          ");
           end_time_bp=millis()+1000;
-          //Serial.print(end_time_bp);
-          tft.setTextColor(ORANGE,BLACK);
+          //serial.print(end_time_bp);
+          tft.settextcolor(orange,black);
          }
          else{    
           
-          //tft.drawRect(143,84,W,H,BLACK)
+          //tft.drawrect(143,84,w,h,black)
           end_time_bp=millis();
-          //Serial.print(end_time_bp);
+          //serial.print(end_time_bp);
           }
       }else{
-        //tft.setCursor(100, 60);
+        //tft.setcursor(100, 60);
         end_time_bp=millis();
-       // Serial.print("bp time====");
-       // Serial.print(end_time_bp);
+       // serial.print("bp time====");
+       // serial.print(end_time_bp);
         }
       
-      tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
-      tft.println(" mmHg   ");
+      tft.print(*(data->bloodpresscorrectedbufptr + *(data->bloodpressindexptr)));
+      tft.println(" mmhg   ");
       
    
    }else{
-      tft.setTextColor(GREEN,BLACK);
-      tft.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
-      tft.println(" mmHg   ");};
+      tft.settextcolor(green,black);
+      tft.print(*(data->bloodpresscorrectedbufptr + *(data->bloodpressindexptr)));
+      tft.println(" mmhg   ");};
   
     
-       tft.setTextColor(WHITE);
-       tft.setTextSize(1);
+       tft.settextcolor(white);
+       tft.settextsize(1);
        tft.println("        ");
-       tft.setTextSize(2);
-       tft.print(" Diastolic :");
-       if (bpOutOfRange==1){
+       tft.settextsize(2);
+       tft.print(" diastolic :");
+       if (bpoutofrange==1){
           start_time_bp=millis();
           if (end_time_bp!=0){
-            //Serial.print("=================");
-            //Serial.println(start_time_bp-end_time_bp);
+            //serial.print("=================");
+            //serial.println(start_time_bp-end_time_bp);
             if (start_time_bp-end_time_bp>1000){
               //tft.print("          ");
               end_time_bp=millis()+1000;
-              //Serial.print(end_time_bp);
-              tft.setTextColor(ORANGE,BLACK);
+              //serial.print(end_time_bp);
+              tft.settextcolor(orange,black);
              }
              else{    
 
@@ -754,6 +765,8 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, WHITE);
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 5*H-5, W-5, CYAN);
       Measure_text();
       Measure_text1();
 
@@ -764,6 +777,8 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5,  WHITE);
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 5*H-5, W-5, CYAN);
       Measure_text();
       Measure_text2();
       
@@ -773,6 +788,8 @@ void Display_function(void *uncast_data){
       tft.drawRect(H+5,320-W+5, 3*H-5, W-5, WHITE);
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
       tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 5*H-5, W-5, CYAN);
       Measure_text();
       Measure_text3();
 
@@ -781,9 +798,23 @@ void Display_function(void *uncast_data){
       //Menu Select diagram
       tft.drawRect(H+5,320-W+5, 4*H-5, W-5, WHITE);
       tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 5*H-5, W-5, CYAN);
       Measure_text();
       Measure_text4();
+      
+
+    }else if(*(data->measurementSelectionPtr)==5){
+
+      //Menu Select diagram
+      tft.drawRect(H+5,320-W+5, 5*H-5, W-5, WHITE);
+      tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+      tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
+      Measure_text();
+      Measure_text5();
       
 
     }else {
@@ -795,10 +826,13 @@ void Display_function(void *uncast_data){
       tft.fillRect(H+5,320-W, 2*H, W, CYAN);
       tft.fillRect(H+5,320-W, 3*H, W, CYAN);
       tft.fillRect(H+5,320-W, 4*H, W, CYAN);
+      tft.fillRect(H+5,320-W, 5*H, W, CYAN);
       tft.drawRect(H+5,320-W, 1*H, W, WHITE);
       tft.drawRect(H+5,320-W, 2*H, W,  WHITE);
       tft.drawRect(H+5,320-W, 3*H, W, WHITE);
       tft.drawRect(H+5,320-W, 4*H, W, WHITE);
+      tft.drawRect(H+5,320-W, 5*H, W, WHITE);
+
       bar_text();
       Measure_text();
       *(data->initial_val_menuPtr)=1;
@@ -918,6 +952,9 @@ void TFTKeypad_function(void *uncast_data){
 
         }else if(p.x>H+3*Measure_Select_height && p.x<4*Measure_Select_height+H){
           *(data->measurementSelectionPtr)=4;
+          
+        }else if(p.x>H+4*Measure_Select_height && p.x<5*Measure_Select_height+H){
+          *(data->measurementSelectionPtr)=5;
           
         }else if(p.x<H){
            *(data->measurementSelectionPtr)=0;
