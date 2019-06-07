@@ -1,6 +1,8 @@
 #include <Elegoo_GFX.h>    // Core graphics library
 #include <Elegoo_TFTLCD.h> // Hardware-specific library
 #include <TouchScreen.h>
+#include "arduinoFFT.h"
+arduinoFFT FFT = arduinoFFT();
 #if defined(__SAM3X8E__)
     #undef __FlashStringHelper::F(string_literal)
     #define F(string_literal) string_literal
@@ -92,13 +94,16 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 #define Measure_Select_width 80
 #define MINPRESSURE 10
 #define MAXPRESSURE 1000
+#define SERIAL1_RX_BUFFER_SIZE 4096
+#define SERIAL1_TX_BUFFER_SIZE 4096
 
 Elegoo_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
 /*Shared varibles*/
 //Measurements
 unsigned int temperatureRawBuf[8], bloodPressRawBuf[16];
-unsigned int pulseRateRawBuf[8], respirationRateRawBuf[8],EKGRawBuf[256],EKGFreqBuf[16];
+unsigned int pulseRateRawBuf[8], respirationRateRawBuf[8],EKGFreqBuf[16];
+double EKGRawBuf[256];
 //Buffer index
 unsigned char tempIndex=0, bloodPressIndex=0, pulseRateIndex=0, respirationRateIndex=0,EKGRawIndex=0,EKGFreqIndex;
 //Display
@@ -110,7 +115,6 @@ unsigned short batteryState=200;
 unsigned char bpOutOfRange=0, tempOutOfRange=0, pulseOutOfRange=0, rrOutOfRange=0,EKGOutOfRange=0;
 //Warning
 bool bpHigh=false, tempHigh=false, pulseLow=false, rrLow=false, rrHigh=false, EKGLOW=false ,EKGHigh=false;
-
 
 
 //TFT Keypad
@@ -138,8 +142,8 @@ bool taskInQue[numTask]={false};
 /*Scheduler data*/
 String message; //message of task time
 #define taskqueFinishPin 30 //pin to be toggled after one cycle of task que
-unsigned long mStart_time[5]={0,0,0,0,0}; //the start time of each measurement
-bool mAvailable[5]={true,true,true,true,true}; //availibility of each measurement
+unsigned long mStart_time[6]={0,0,0,0,0,0}; //the start time of each measurement
+bool mAvailable[6]={true,true,true,true,true,true}; //availibility of each measurement
 unsigned long start_time; //the start time of each task
 unsigned long taskTime[numTask]; //store the execution time of each task
 
@@ -147,7 +151,8 @@ unsigned long taskTime[numTask]; //store the execution time of each task
 //Task Measure's data
 typedef struct DataStructMeasure{
   unsigned char id;
-  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr, *respirationRateRawBufPtr,*EKGRawBufPtr;
+  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr, *respirationRateRawBufPtr;
+  double *EKGRawBufPtr;
   unsigned short *measurementSelectionPtr;
   unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr, *respirationRateIndexPtr,*EKGRawIndexPtr;
   bool *addFlagPtr;
@@ -157,7 +162,8 @@ DataStructMeasure MeasureData;
 //Task Compute's data
 typedef struct DataStructCompute{
   unsigned char id;
-  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr, *respirationRateRawBufPtr,*EKGRawBufPtr,*EKGFreqBufPtr;
+  unsigned int *temperatureRawBufPtr, *bloodPressRawBufPtr, *pulseRateRawBufPtr, *respirationRateRawBufPtr,*EKGFreqBufPtr;
+  double *EKGRawBufPtr;
   unsigned char *tempCorrectedBufPtr;
   unsigned int *bloodPressCorrectedBufPtr, *pulseRateCorrectedBufPtr, *respirationRateCorrectedBufPtr,*EKGFreqBuffPtr;
   unsigned short *measurementSelectionPtr;
@@ -275,7 +281,8 @@ void Measure_function(void *uncast_data){
   String cast_str;
   int value[2];
   char buf[10];
-
+  Serial.print("hey:");
+  Serial.println(*(data->measurementSelectionPtr));
   switch(*(data->measurementSelectionPtr)){
     // Temperature
     case 2:
@@ -329,9 +336,12 @@ void Measure_function(void *uncast_data){
       break;
 
    case 5:
+        Serial.print("case 5");
         Serial1.write("6");
         while ( !Serial1.available()){}
         serialResponse = Serial1.readStringUntil('\n');
+        Serial.print("=====");
+        //Serial.write(serialResponse);
         char buf[serialResponse.length()+1];
         serialResponse.toCharArray(buf, sizeof(buf));
         char *p = buf;
@@ -341,9 +351,13 @@ void Measure_function(void *uncast_data){
         while ((str = strtok_r(p, " ", &p)) != NULL) // delimiter is the semicolon
         {  
           cast_str=(String)str;
-          EKGRawBuf[i] = cast_str.toInt();
+          EKGRawBuf[i] = cast_str.toDouble();
+          Serial.println(cast_str.toDouble());
           i++;
         }
+        Serial.print("number");
+        Serial.print(i);
+        break;
 
     default:
       // nothing
@@ -380,7 +394,15 @@ void Compute_function(void *uncast_data){
       break;
 
     case 5:
-      *(data->EKGFreqBufPtr + *(data->EKGFreqIndexPtr))= *(data->EKGRawBufPtr + *(data->EKGRawIndexPtr));
+      double vImag[256];
+
+      FFT.Windowing(data->EKGRawBufPtr, 256, FFT_WIN_TYP_HAMMING, FFT_FORWARD);
+      FFT.Compute(data->EKGRawBufPtr, vImag, 256, FFT_FORWARD);
+      FFT.ComplexToMagnitude(data->EKGRawBufPtr, vImag, 256);
+      double peak = FFT.MajorPeak(data->EKGRawBufPtr, 256, 8000);
+      Serial.print("peak========");
+      Serial.println(peak);
+      *(data->EKGFreqBufPtr + *(data->EKGFreqIndexPtr))= peak;
       break;
     default:
       break;
@@ -549,7 +571,7 @@ void text_for_display(DataStructDisplay* data){
    //tft.setTextSize(1);
    //tft.println("        ");
    tft.setTextSize(2);
-   tft.print(" Systolic : ");
+   tft.print(" Systolic :    ");
    //Serial.print("out of range value");
    //Serial.println(bpOutOfRange);
    if (bpOutOfRange==1 && *(data->alarmAcknowledgePtr)>5){
@@ -594,7 +616,7 @@ void text_for_display(DataStructDisplay* data){
        tft.setTextSize(1);
        tft.println("        ");
        tft.setTextSize(2);
-       tft.print(" Diastolic :");
+       tft.print(" Diastolic :   ");
        if (bpOutOfRange==1){
           start_time_bp=millis();
           if (end_time_bp!=0){
@@ -628,7 +650,7 @@ void text_for_display(DataStructDisplay* data){
        tft.setTextSize(1);
        tft.println("        ");
        tft.setTextSize(2);
-       tft.print("Temperature:    ");
+       tft.print("Temperature:   ");
        if (tempOutOfRange==1){
         start_time_tp=millis();
           if (end_time_tp!=0){
@@ -670,7 +692,7 @@ void text_for_display(DataStructDisplay* data){
        tft.setTextSize(1);
        tft.println("        ");
        tft.setTextSize(2);
-       tft.print("Pulse Rate:     ");
+       tft.print("Pulse Rate:    ");
        if (pulseOutOfRange==1){
         start_time_pr=millis();
           if (end_time_pr!=0){
@@ -708,7 +730,7 @@ void text_for_display(DataStructDisplay* data){
        tft.setTextSize(1);
        tft.println("        ");
        tft.setTextSize(2);
-       tft.print("Raspiration:     ");
+       tft.print("Raspiration:   ");
        if (rrOutOfRange==1){
         tft.setTextColor(ORANGE,BLACK);}
        else{tft.setTextColor(GREEN,BLACK);};
@@ -719,7 +741,7 @@ void text_for_display(DataStructDisplay* data){
        tft.setTextSize(1);
        tft.println("        ");
        tft.setTextSize(2);
-       tft.print("EKG: ");
+       tft.print("EKG:           ");
        if (EKGOutOfRange==1){tft.setTextColor(ORANGE,BLACK);}
        else{tft.setTextColor(GREEN,BLACK);};
        tft.print(*(data->EKGFreqBufPtr + *(data->EKGFreqIndexPtr)));
@@ -987,6 +1009,8 @@ void TFTKeypad_function(void *uncast_data){
           
         }else if(p.x>H+4*Measure_Select_height && p.x<5*Measure_Select_height+H){
           *(data->measurementSelectionPtr)=5;
+          Serial.println("select meausre 5");
+          
           
         }else if(p.x<H){
            *(data->measurementSelectionPtr)=0;
@@ -1204,7 +1228,7 @@ void setup() {
   DisplayData.bloodPressCorrectedBufPtr = bloodPressCorrectedBuf;
   DisplayData.pulseRateCorrectedBufPtr = pulseRateCorrectedBuf;
   DisplayData.respirationRateCorrectedBufPtr = respirationRateCorrectedBuf;
-  DisplayData.EKGFreqBufPtr = EKGRawBuf;
+  DisplayData.EKGFreqBufPtr = EKGFreqBuf;
   DisplayData.batteryStatePtr = &batteryState;
   DisplayData.measurementSelectionPtr = &measurementSelection;
   DisplayData.alarmAcknowledgePtr = &alarmAcknowledge;
@@ -1228,7 +1252,7 @@ void setup() {
   WarningAlarmData.bloodPressRawBufPtr = bloodPressRawBuf;
   WarningAlarmData.pulseRateRawBufPtr = pulseRateRawBuf;
   WarningAlarmData.respirationRateRawBufPtr = respirationRateRawBuf;
-  WarningAlarmData.EKGFreqBufPtr = EKGRawBuf;
+  WarningAlarmData.EKGFreqBufPtr = EKGFreqBuf;
   WarningAlarmData.batteryStatePtr = &batteryState;
   WarningAlarmData.alarmAcknowledgePtr = &alarmAcknowledge;
   WarningAlarmData.AnnSelectionPtr=&AnnSelection;
@@ -1306,8 +1330,8 @@ void setup() {
   //Initialized serial port 0 & 1
   Serial.begin(2000000);
   Serial1.begin(2000000);
-  Serial.setTimeout(5);
-  Serial1.setTimeout(5);
+  Serial.setTimeout(100);
+  Serial1.setTimeout(100);
 
   //Initialized for TFT
   Serial.println(F("TFT LCD test"));
@@ -1368,17 +1392,17 @@ void loop() {
   for (int i=0; i<numTask; i++)
     taskTime[i] = 0;*/
   // Enable Measure and Status tasks if time exceeds 5 seconds
-  for (int i=0; i<5; i++){
+  for (int i=0; i<6; i++){
     if (!mAvailable[i] && (millis() - mStart_time[i] >= 5000))
       mAvailable[i] = true;
   }
   // Set add flags of Status and WarningAlarm tasks when Status is available,
   // disable Status and start timer
-  if (mAvailable[4]){
+  if (mAvailable[5]){
     taskAddFlag[6] = true;
     taskAddFlag[3] = true;
-    mAvailable[4] = false;
-    mStart_time[4] = millis();
+    mAvailable[5] = false;
+    mStart_time[5] = millis();
   }
   // Set add flags of Measure, Compute and WarningAlarm tasks when selected Measure is available,
   // disable the selected Measure and start timer
