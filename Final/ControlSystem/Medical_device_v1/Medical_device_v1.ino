@@ -117,7 +117,7 @@ unsigned short batteryState=200;
 //Alarms
 unsigned char bpOutOfRange=0, tempOutOfRange=0, pulseOutOfRange=0, rrOutOfRange=0,EKGOutOfRange=0;
 //Warning
-bool bpHigh=false, tempHigh=false, pulseLow=false, rrLow=false, rrHigh=false, EKGLOW=false ,EKGHigh=false;
+bool bpHigh=false, tempHigh=false, pulseLow=false, rrLow=false, rrHigh=false, EKGLow=false ,EKGHigh=false;
 
 
 //TFT Keypad
@@ -242,7 +242,7 @@ typedef struct DataStructWarnComm{
   unsigned char *tempCorrectedBufPtr;
   unsigned int *bloodPressCorrectedBufPtr, *pulseRateCorrectedBufPtr, *respirationRateCorrectedBufPtr, *EKGFreqBufPtr;
   unsigned short *batteryStatePtr;
-  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr, *respirationRateIndexPtr,, *EKGFreqIndexPtr;
+  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr, *respirationRateIndexPtr,*EKGFreqIndexPtr;
   bool *addFlagPtr;
 }DataStructWarnComm;
 DataStructWarnComm WarnCommData;
@@ -521,7 +521,7 @@ void Communications_function(void *uncast_data){
 }
 
 void WarnComm_function(void *uncast_data){
-  DataStructRemoteComm* data;
+  DataStructWarnComm* data;
   data = (DataStructWarnComm*)uncast_data;
   Serial.write("w");
   if(bpHigh){
@@ -886,7 +886,7 @@ void text_for_display(DataStructDisplay* data){
 void Display_function(void *uncast_data){
   DataStructDisplay* data;
   data=(DataStructDisplay*)uncast_data;
-  if (blackScreeenFlag>0){
+  if (blackScreenFlag>0){
       if (*(data->alarmAcknowledgePtr)<5){
           bar_text();
       }else{
@@ -1224,7 +1224,7 @@ void WarningAlarm_function(void *uncast_data){
   if (*(data->EKGFreqBufPtr + *(data->EKGFreqIndexPtr))<35 || *(data->EKGFreqBufPtr + *(data->EKGFreqIndexPtr))>3750){
       EKGOutOfRange=1;
        if (*(data->EKGFreqBufPtr + *(data->EKGFreqIndexPtr))<35 ){
-        EKGLOW=true;
+        EKGLow=true;
         }
        if (*(data->EKGFreqBufPtr + *(data->EKGFreqIndexPtr))>3750 ){
         EKGHigh=true;
@@ -1232,7 +1232,7 @@ void WarningAlarm_function(void *uncast_data){
       
     }else{
      EKGOutOfRange=0;
-      EKGLOW=false;
+      EKGLow=false;
       EKGHigh=false;
     
   }
