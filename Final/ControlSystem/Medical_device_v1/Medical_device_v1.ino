@@ -8,6 +8,9 @@ arduinoFFT FFT = arduinoFFT();
     #define F(string_literal) string_literal
 #endif
 
+// newly added global variable 06/08
+short blackScreenFlag = 1;
+
 // When using the BREAKOUT BOARD only, use these 8 data lines to the LCD:
 // For the Arduino Uno, Duemilanove, Diecimila, etc.:
 //   D0 connects to digital pin 8  (Notice these are
@@ -1073,7 +1076,7 @@ void WarningAlarm_function(void *uncast_data){
       bpOutOfRange=1;
       bpHigh=true;
       Serial.println("out of range of bp");
-      *(data->addComFlagPtr) = true;
+//      *(data->addComFlagPtr) = true;
       
       if(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130*1.2){
         if( taskInQue[5]==true){
@@ -1173,10 +1176,10 @@ void RemoteComm_function(void *uncast_data){
 
   if(Serial.available()){
     serialResponse = Serial.readStringUntil('\0');
-    if( serialResponse == "START" ){  
-        Serial.println("successfully connected!")
+    if( serialResponse == "I" ){  
+//        Serial.println("successfully connected!");
     }
-    else if( serialResponse == "RESET" ){  
+    else if( serialResponse == "P" ){  
         *data->measurementSelectionPtr = 0;
     }
     else if( serialResponse == "SB" ){
@@ -1196,6 +1199,18 @@ void RemoteComm_function(void *uncast_data){
     }
     else if( serialResponse == "5" ){
         *data->alarmAcknowledgePtr = 1;
+    }
+    else if( serialResponse == "W" ){
+        taskAddFlag[9] = true; // add communication task to queue;
+    }
+    else if( serialResponse == "M" ){
+        taskAddFlag[7] = true; // add communication task to queue
+    }
+    else if( serialResponse == "D" ){
+        blackScreenFlag *= -1;
+    }
+    else{
+      Serial.print("E!");
     }
   }
 }
