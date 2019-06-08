@@ -127,14 +127,15 @@ unsigned long end_time_bp =0,start_time_bp=0;
 unsigned long end_time_tp =0,start_time_tp=0;
 unsigned long end_time_pr =0,start_time_pr=0;
 /*Define tasks*/
-#define numTask 8
+#define numTask 9
 typedef struct TCB{
   void (*myTask)(void*);
   void *taskDataPtr;
   TCB *next=NULL, *prev=NULL;
 }TCB;
-String taskName[numTask] = {"Display", "TFTKeypad", "RemoteComm", "WarningAlarm", "Compute", "Measure", "Status", "Communications"};
-TCB Measure, Compute;
+String taskName[numTask] = {"Display", "TFTKeypad", "RemoteComm", "WarningAlarm", "Compute",
+                            "Measure", "Status", "Communications", "WarnComm"};
+TCB Measure, Compute, WarnComm;
 TCB Display, WarningAlarm, Status;
 TCB TFTKeypad, Communications, RemoteComm;
 TCB *head=NULL, *tail=NULL, *currentTask=NULL;
@@ -145,8 +146,8 @@ bool taskInQue[numTask]={false};
 /*Scheduler data*/
 String message; //message of task time
 #define taskqueFinishPin 30 //pin to be toggled after one cycle of task que
-unsigned long mStart_time[6]={0,0,0,0,0,0}; //the start time of each measurement
-bool mAvailable[6]={true,true,true,true,true,true}; //availibility of each measurement
+unsigned long mStart_time[7]={0,0,0,0,0,0,0}; //the start time of each measurement
+bool mAvailable[7]={true,true,true,true,true,true,true}; //availibility of each measurement
 unsigned long start_time; //the start time of each task
 unsigned long taskTime[numTask]; //store the execution time of each task
 
@@ -234,6 +235,17 @@ typedef struct DataStructRemoteComm{
   unsigned short *initial_val_menuPtr, *initial_val_AnnPtr;
 }DataStructRemoteComm;
 DataStructRemoteComm RemoteCommData;
+
+//Task WarnComm's data
+typedef struct DataStructWarnComm{
+  unsigned char id;
+  unsigned char *tempCorrectedBufPtr;
+  unsigned int *bloodPressCorrectedBufPtr, *pulseRateCorrectedBufPtr, *respirationRateCorrectedBufPtr;
+  unsigned short *batteryStatePtr;
+  unsigned char *tempIndexPtr, *bloodPressIndexPtr, *pulseRateIndexPtr, *respirationRateIndexPtr;
+  bool *addFlagPtr;
+}DataStructWarnComm;
+DataStructWarnComm WarnCommData;
 
 void Insert(TCB* node){
    if(NULL==head){
@@ -1372,6 +1384,22 @@ void setup() {
   RemoteCommData.addFlagPtr = &taskAddFlag[2];
   RemoteComm.taskDataPtr = &RemoteCommData;
   taskArray[2] = &RemoteComm;
+    
+  //Initialized task WarnComm
+  WarnComm.myTask = WarnComm_function;
+  WarnCommData.tempCorrectedBufPtr = tempCorrectedBuf;
+  WarnCommData.bloodPressCorrectedBufPtr = bloodPressCorrectedBuf;
+  WarnCommData.pulseRateCorrectedBufPtr = pulseRateCorrectedBuf;
+  WarnCommData.respirationRateCorrectedBufPtr = respirationRateCorrectedBuf;
+  WarnCommData.batteryStatePtr = &batteryState;
+  WarnCommData.tempIndexPtr = &tempIndex;
+  WarnCommData.bloodPressIndexPtr = &bloodPressIndex;
+  WarnCommData.pulseRateIndexPtr = &pulseRateIndex;
+  WarnCommData.respirationRateIndexPtr = &respirationRateIndex;
+  WarnCommData.id = 8;
+  WarnCommData.addFlagPtr = &taskAddFlag[8];
+  WarnComm.taskDataPtr = &WarnCommData;
+  taskArray[8] = &WarnComm;
 
   //Initialized taskque
   taskAddFlag[0] = true; Insert(taskArray[0]); taskInQue[0] = true;
@@ -1386,8 +1414,8 @@ void setup() {
   //Initialized serial port 0 & 1
   Serial.begin(2000000);
   Serial1.begin(2000000);
-  Serial.setTimeout(100);
-  Serial1.setTimeout(100);
+  Serial.setTimeout(10);
+  Serial1.setTimeout(10);
 
   //Initialized for TFT
   Serial.println(F("TFT LCD test"));
@@ -1441,16 +1469,23 @@ void setup() {
   pinMode(13, OUTPUT);
 }
 
-//taskArray = {"Display", "TFTKeypad", "RemoteComm", "WarningAlarm", "Compute", "Measure", "Status", "Communications"}
+//taskArray = {"Display", "TFTKeypad", "RemoteComm", "WarningAlarm", "Compute", "Measure", "Status", "Communications", "WarnComm"}
 /*Scheduler*/
 void loop() {
   /*//set each task execution time to zero
   for (int i=0; i<numTask; i++)
     taskTime[i] = 0;*/
   // Enable Measure and Status tasks if time exceeds 5 seconds
-  for (int i=0; i<6; i++){
+  for (int i=0; i<7; i++){
     if (!mAvailable[i] && (millis() - mStart_time[i] >= 5000))
       mAvailable[i] = true;
+  }
+  // Set add flags of WarnComm task when WarnComm is available,
+  // disable WarnComm and start timer
+  if (mAvailable[6]){
+    taskAddFlag[8] = true;
+    mAvailable[6] = false;
+    mStart_time[6] = millis();
   }
   // Set add flags of Status and WarningAlarm tasks when Status is available,
   // disable Status and start timer
