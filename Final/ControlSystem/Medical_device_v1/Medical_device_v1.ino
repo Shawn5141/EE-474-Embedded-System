@@ -456,11 +456,91 @@ void Communications_function(void *uncast_data){
   Serial.write("Respiration rate:     ");
   Serial.print(*(data->respirationRateCorrectedBufPtr + *(data->respirationRateIndexPtr)));
   Serial.write(" BPM\n");
+  Serial.write("EKG:                  ");
+  Serial.print(*(data->EKGFreqBufPtr + *(data->EKGFreqIndexPtr)));
+  Serial.write(" Hz\n");
   Serial.write("Battery:              ");
   Serial.print(*(data->batteryStatePtr));
   Serial.write("\n");
 
+  Serial.write("#");
+  if(tempHigh){
+    Serial.print("1");
+  }
+  else{
+    Serial.print("0");
+  }
+  if(bpHigh){
+    Serial.print("1");
+    Serial.print("1");
+  }
+  else{
+    Serial.print("0");
+    Serial.print("0");
+  }
+  
+  if(pulseLow){
+    Serial.print("1");
+  }
+  else{
+    Serial.print("0");
+  }
+  if(rrLow || rrHigh){
+    Serial.print("1");
+  }
+  else{
+    Serial.print("0");
+  }
+  if(EKGLow || EKGHigh){
+    Serial.print("1");
+  }
+  else{
+    Serial.print("0");
+  }
+  if(batteryState < 40){
+    Serial.print("1");
+  }
+  else{
+    Serial.print("0");
+  }
+  Serial.print("!");
 
+  *(data->addFlagPtr) = false;
+}
+
+void WarnComm_function(void *uncast_data){
+  DataStructRemoteComm* data;
+  data = (DataStructWarnComm*)uncast_data;
+  Serial.write("w");
+  if(bpHigh){
+    Serial.write("Systolic pressure:    ");
+    Serial.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
+    Serial.write(" mm Hg\n");
+    Serial.write("Diastolic pressure:   ");
+    Serial.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr) + 8));
+    Serial.write(" mm Hg\n");
+  }
+  if(tempHigh){
+    Serial.write("Temperature:          ");
+    Serial.print(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
+    Serial.write(" C\n");
+  }
+  if(pulseLow){
+    Serial.write("Pulse rate:           ");
+    Serial.print(*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr)));
+    Serial.write(" BPM\n");
+  }
+  if(rrLow || rrHigh){
+    Serial.write("Respiration rate:     ");
+    Serial.print(*(data->respirationRateCorrectedBufPtr + *(data->respirationRateIndexPtr)));
+    Serial.write(" BPM\n");
+  }
+  if(EKGLow || EKGHigh){
+    Serial.write("EKG:                  ");
+    Serial.print(*(data->EKGFreqBufPtr + *(data->EKGFreqIndexPtr)));
+    Serial.write(" Hz\n");
+  }
+  Serial.write("!");
   *(data->addFlagPtr) = false;
 }
  
@@ -1219,6 +1299,8 @@ void RemoteComm_function(void *uncast_data){
     }
   }
 }
+
+
 
 void setup() {
 
