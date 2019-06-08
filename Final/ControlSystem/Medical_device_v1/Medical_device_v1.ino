@@ -791,143 +791,148 @@ void text_for_display(DataStructDisplay* data){
 void Display_function(void *uncast_data){
   DataStructDisplay* data;
   data=(DataStructDisplay*)uncast_data;
-  if (*(data->alarmAcknowledgePtr)<5){
-      bar_text();
-  }else{
-     bar_text1();
-     
-    }
-
-  
-  if (*(data->functionSelectPtr)==0 )  {
-    //Ann Select diagram first time enter
-    if (*(data->initial_val_AnnPtr)==0){
-        tft.setRotation(2);
-        //tft.fillRect(0,320-2*W, H, W, GREEN);
-        tft.fillRect(H+5,0, tft.width(),tft.height(), BLACK);
-        
-        bar_text();
-        text_for_display(data);
-        *(data->initial_val_menuPtr)=0;
-        *(data->initial_val_AnnPtr)=1;
-    }else{
-    //Ann Select diagram second time enter
-
-
-        if (*(data->alarmAcknowledgePtr)>5 && *(data->AnnSelectionPtr)==1){
-            //Serial.print("greater than 5 and ret==================");
-            *(data->alarmAcknowledgePtr)=0;
-            tft.fillRect(0,320-2*W, H, W, GREEN);
-            
-          
-         }
-       
-        bar_text();
-        text_for_display(data);
-      
-      }
-
-    
-  }else{
-    
-    tft.setRotation(2);
-    tft.drawRect(0,320-3*W, H, W, WHITE);
-    for(int i=0; i<10000;i++){};
-    //tft.drawRect(0,320-W, H, W, GREEN);
-    
-   if(*(data->measurementSelectionPtr)==1){
-      
-      //Menu Select diagra   
-      tft.drawRect(H+5,320-W+5, 1*H-5, W-5, WHITE);
-      tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 5*H-5, W-5, CYAN);
-      Measure_text();
-      Measure_text1();
-
-      
-    }else if(*(data->measurementSelectionPtr)==2){
-      
-      //Menu Select diagram
-      tft.drawRect(H+5,320-W+5, 2*H-5, W-5,  WHITE);
-      tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 5*H-5, W-5, CYAN);
-      Measure_text();
-      Measure_text2();
-      
-    }else if(*(data->measurementSelectionPtr)==3){
-
-      //Menu Select diagram
-      tft.drawRect(H+5,320-W+5, 3*H-5, W-5, WHITE);
-      tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 5*H-5, W-5, CYAN);
-      Measure_text();
-      Measure_text3();
-
-    }else if(*(data->measurementSelectionPtr)==4){
-
-      //Menu Select diagram
-      tft.drawRect(H+5,320-W+5, 4*H-5, W-5, WHITE);
-      tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 5*H-5, W-5, CYAN);
-      Measure_text();
-      Measure_text4();
-      
-
-    }else if(*(data->measurementSelectionPtr)==5){
-
-      //Menu Select diagram
-      tft.drawRect(H+5,320-W+5, 5*H-5, W-5, WHITE);
-      tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
-      tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
-      Measure_text();
-      Measure_text5();
-      
-
-    }else {
-      if (*(data->initial_val_menuPtr)==0){
-      //tft.fillRect(0,320-2*W, H, W, GREEN);
-      tft.fillRect(H+5,0, tft.width(),tft.height()-W, BLACK);
-      tft.fillRect(4*H+5,0, tft.width(),tft.height(), BLACK);
-      tft.fillRect(H+5,320-W, 1*H, W, CYAN);
-      tft.fillRect(H+5,320-W, 2*H, W, CYAN);
-      tft.fillRect(H+5,320-W, 3*H, W, CYAN);
-      tft.fillRect(H+5,320-W, 4*H, W, CYAN);
-      tft.fillRect(H+5,320-W, 5*H, W, CYAN);
-      tft.drawRect(H+5,320-W, 1*H, W, WHITE);
-      tft.drawRect(H+5,320-W, 2*H, W,  WHITE);
-      tft.drawRect(H+5,320-W, 3*H, W, WHITE);
-      tft.drawRect(H+5,320-W, 4*H, W, WHITE);
-      tft.drawRect(H+5,320-W, 5*H, W, WHITE);
-
-      bar_text();
-      Measure_text();
-      *(data->initial_val_menuPtr)=1;
-      
+  if (blackScreeenFlag>0){
+      if (*(data->alarmAcknowledgePtr)<5){
+          bar_text();
       }else{
-        
-        Measure_text();
-       }   
-      
-      //text_for_display();
+         bar_text1();
+
+        }
+
+
+      if (*(data->functionSelectPtr)==0 )  {
+        //Ann Select diagram first time enter
+        if (*(data->initial_val_AnnPtr)==0){
+            tft.setRotation(2);
+            //tft.fillRect(0,320-2*W, H, W, GREEN);
+            tft.fillRect(H+5,0, tft.width(),tft.height(), BLACK);
+
+            bar_text();
+            text_for_display(data);
+            *(data->initial_val_menuPtr)=0;
+            *(data->initial_val_AnnPtr)=1;
+        }else{
+        //Ann Select diagram second time enter
+
+
+            if (*(data->alarmAcknowledgePtr)>5 && *(data->AnnSelectionPtr)==1){
+                //Serial.print("greater than 5 and ret==================");
+                *(data->alarmAcknowledgePtr)=0;
+                tft.fillRect(0,320-2*W, H, W, GREEN);
+
+
+             }
+
+            bar_text();
+            text_for_display(data);
+
+          }
+
+
+      }else{
+
+        tft.setRotation(2);
+        tft.drawRect(0,320-3*W, H, W, WHITE);
+        for(int i=0; i<10000;i++){};
+        //tft.drawRect(0,320-W, H, W, GREEN);
+
+       if(*(data->measurementSelectionPtr)==1){
+
+          //Menu Select diagra   
+          tft.drawRect(H+5,320-W+5, 1*H-5, W-5, WHITE);
+          tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 5*H-5, W-5, CYAN);
+          Measure_text();
+          Measure_text1();
+
+
+        }else if(*(data->measurementSelectionPtr)==2){
+
+          //Menu Select diagram
+          tft.drawRect(H+5,320-W+5, 2*H-5, W-5,  WHITE);
+          tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 5*H-5, W-5, CYAN);
+          Measure_text();
+          Measure_text2();
+
+        }else if(*(data->measurementSelectionPtr)==3){
+
+          //Menu Select diagram
+          tft.drawRect(H+5,320-W+5, 3*H-5, W-5, WHITE);
+          tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 5*H-5, W-5, CYAN);
+          Measure_text();
+          Measure_text3();
+
+        }else if(*(data->measurementSelectionPtr)==4){
+
+          //Menu Select diagram
+          tft.drawRect(H+5,320-W+5, 4*H-5, W-5, WHITE);
+          tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 5*H-5, W-5, CYAN);
+          Measure_text();
+          Measure_text4();
+
+
+        }else if(*(data->measurementSelectionPtr)==5){
+
+          //Menu Select diagram
+          tft.drawRect(H+5,320-W+5, 5*H-5, W-5, WHITE);
+          tft.drawRect(H+5,320-W+5, 1*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 2*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 3*H-5, W-5, CYAN);
+          tft.drawRect(H+5,320-W+5, 4*H-5, W-5, CYAN);
+          Measure_text();
+          Measure_text5();
+
+
+        }else {
+          if (*(data->initial_val_menuPtr)==0){
+          //tft.fillRect(0,320-2*W, H, W, GREEN);
+          tft.fillRect(H+5,0, tft.width(),tft.height()-W, BLACK);
+          tft.fillRect(4*H+5,0, tft.width(),tft.height(), BLACK);
+          tft.fillRect(H+5,320-W, 1*H, W, CYAN);
+          tft.fillRect(H+5,320-W, 2*H, W, CYAN);
+          tft.fillRect(H+5,320-W, 3*H, W, CYAN);
+          tft.fillRect(H+5,320-W, 4*H, W, CYAN);
+          tft.fillRect(H+5,320-W, 5*H, W, CYAN);
+          tft.drawRect(H+5,320-W, 1*H, W, WHITE);
+          tft.drawRect(H+5,320-W, 2*H, W,  WHITE);
+          tft.drawRect(H+5,320-W, 3*H, W, WHITE);
+          tft.drawRect(H+5,320-W, 4*H, W, WHITE);
+          tft.drawRect(H+5,320-W, 5*H, W, WHITE);
+
+          bar_text();
+          Measure_text();
+          *(data->initial_val_menuPtr)=1;
+
+          }else{
+
+            Measure_text();
+           }   
+
+          //text_for_display();
+
+          }
+          initial_val_Ann=0;
+
+
+
+
 
       }
-      initial_val_Ann=0;
-    
-    
-    
-
-
-  }  
+  }else{
+    tft.fillRect(0,0, tft.width(),tft.height(), BLACK);
+  
+  }
 
 }
 
