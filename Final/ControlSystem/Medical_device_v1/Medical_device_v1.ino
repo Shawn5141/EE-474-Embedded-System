@@ -1173,20 +1173,26 @@ void RemoteComm_function(void *uncast_data){
 
   if(Serial.available()){
     serialResponse = Serial.readStringUntil('\0');
-    if( serialResponse == "0" ){  
+    if( serialResponse == "START" ){  
+        Serial.println("successfully connected!")
+    }
+    else if( serialResponse == "RESET" ){  
         *data->measurementSelectionPtr = 0;
     }
-    else if( serialResponse == "1" ){
+    else if( serialResponse == "SB" ){
         *data->measurementSelectionPtr = 1;
     }
-    else if( serialResponse == "2" ){
+    else if( serialResponse == "ST" ){
         *data->measurementSelectionPtr = 2;
     }
-    else if( serialResponse == "3" ){
+    else if( serialResponse == "SP" ){
         *data->measurementSelectionPtr = 3;
     }
-    else if( serialResponse == "4" ){
+    else if( serialResponse == "SR" ){
         *data->measurementSelectionPtr = 4;
+    }
+    else if( serialResponse == "SE" ){
+        *data->measurementSelectionPtr = 5;
     }
     else if( serialResponse == "5" ){
         *data->alarmAcknowledgePtr = 1;
