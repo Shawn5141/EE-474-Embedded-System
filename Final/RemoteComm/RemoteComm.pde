@@ -1,95 +1,94 @@
-import controlP5.*; //import ControlP5 library
+import controlP5.*;
 import processing.serial.*;
 
 Serial port;
+ControlP5 cp5;
+boolean initialize = false;
+byte offset = 0;
+String message;
+boolean E = false;
+String measure = "";
+String warning = "";
+boolean [] flash;
+boolean [] show;
+int [] time;
 
-ControlP5 cp5; //create ControlP5 object
-PFont font;
-
-void setup(){ //same as arduino program
-
-  size(320, 650);    //window size, (width, height)
-
-  port = new Serial(this, "COM4", 2000000);  //i have connected arduino to com3, it would be different in linux and mac os
+void setup() {
+  size(700,400);
   
-  //lets add buton to empty window
+  port = new Serial(this, "COM3", 2000000);
+  
+  PFont font = createFont("arial",20);
   
   cp5 = new ControlP5(this);
-  font = createFont("Calibri Light", 20);    // custom fonts for buttons and title
   
-  cp5.addButton("reset")     //"red" is the name of button
-    .setPosition(80, 50)  //x and y coordinates of upper left corner of button
-    .setSize(160, 70)      //(width, height)
-    .setFont(font)
-  ;   
-
-  cp5.addButton("blood_pressure")     //"yellow" is the name of button
-    .setPosition(80, 150)  //x and y coordinates of upper left corner of button
-    .setSize(160, 70)      //(width, height)
-    .setFont(font)
-  ;
-
-  cp5.addButton("temperature")     //"blue" is the name of button
-    .setPosition(80, 250)  //x and y coordinates of upper left corner of button
-    .setSize(160, 70)      //(width, height)
-    .setFont(font)
-  ;
-  
-  cp5.addButton("pulse_rate")     //"alloff" is the name of button
-    .setPosition(80, 350)  //x and y coordinates of upper left corner of button
-    .setSize(160, 70)      //(width, height)
-    .setFont(font)
-  ;
-  
-  cp5.addButton("respiration_rate")     //"alloff" is the name of button
-    .setPosition(80, 450)  //x and y coordinates of upper left corner of button
-    .setSize(160, 70)      //(width, height)
-    .setFont(font)
-  ;
-  
-  cp5.addButton("acknowledge")     //"alloff" is the name of button
-    .setPosition(80, 550)  //x and y coordinates of upper left corner of button
-    .setSize(160, 70)      //(width, height)
-    .setFont(font)
-  ;
-}
-
-void draw(){  //same as loop in arduino
-
-  background(150, 0 , 150); // background color of window (r, g, b) or (0 to 255)
-  
-  //lets give title to our window
-  fill(0, 255, 0);               //text color (r, g, b)
+  cp5.addTextfield("input")
+     .setPosition(20,100)
+     .setSize(200,40)
+     .setFont(font)
+     .setFocus(true)
+     .setColor(color(255,0,0))
+     ;
+     
   textFont(font);
-  text("Medical Device", 90, 30);  // ("text", x coordinate, y coordinat)
-  if (port.available()>0){
-    print(port.readString());
+  flash = new boolean[7];
+  show = new boolean[7];
+  time = new int[7];
+}
+
+void draw() {
+  if (initialize){
+    if (port.available()>0){
+      message = port.readStringUntil('!');
+      if (message.equals("E"))
+        E = true;
+      else if (message.charAt(0) == 'w'){
+        message = message.replace("w", "");
+        warning = message;
+      }
+      else { 
+        String [] f = message.split("#");
+        measure = f[0];
+        String [] farray = f[1].split(" ");
+        for (int i=0; i<7; i++)
+          flash[i] = farray[i].equals("1");
+      }
+    }
   }
+  refresh();
 }
 
-//lets add some functions to our buttons
-//so whe you press any button, it sends perticular char over serial port
-
-void reset(){
-  port.write('0');
+public void input(String theText) {
+  // automatically receives results from controller input
+  if (!initialize){
+    if (theText.equals("I")){
+      initialize = true;
+    }
+    return;
+  }
+  E = false;
+  println("a textfield event for controller 'input' : "+theText);
+  port.write(theText);
 }
 
-void blood_pressure(){
-  port.write('1');
-}
-
-void temperature(){
-  port.write('2');
-}
-
-void pulse_rate(){
-  port.write('3');
-}
-
-void respiration_rate(){
-  port.write('4');
-}
-
-void acknowledge(){
-  port.write('5');
+public void refresh(){
+  background(0);
+  if (initialize)
+    text("Connected!", 20, 50);
+  if (E)
+    text("E", 20, 75);
+  text("Warning data:", 20, 125);
+  text(warning, 20, 150);
+  String [] m = measure.split("\n");
+  for (int i=0; i<m.length; i++){
+    if (!flash[i]){
+      show[i] = true;
+    }
+    else if (millis() - time[i] >= 500){
+      show[i] = !show[i];
+      time[i] = millis();
+    }
+    if (show[i])
+      text(m[i], 100, 50 + i * 25);
+  }
 }
