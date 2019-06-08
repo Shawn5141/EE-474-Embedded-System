@@ -1102,10 +1102,18 @@ void WarningAlarm_function(void *uncast_data){
   }
 
   if (*(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))<12*0.95 || *(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))>25*1.05){
-      rrOutOfRange=1;
-      rrLow=true;
+      
+	  rrOutOfRange=1;
+     if (*(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))<12*0.95){
+         rrLow=true;
+     }
+     
+     if ( *(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))>25*1.05){
+         rrHigh=true;
+     }
     }else{
       rrLow=false;
+      rrHigh=true;
       rrOutOfRange=0;
     
   }
