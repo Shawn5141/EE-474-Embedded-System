@@ -5,7 +5,7 @@ Serial port;
 ControlP5 cp5;
 boolean initialize = false;
 byte offset = 0;
-String message;
+String message=" ";
 boolean E = false;
 String measure = "";
 String warning = "";
@@ -14,9 +14,9 @@ boolean [] show;
 int [] time;
 
 void setup() {
-  size(700,400);
+  size(700,500);
   
-  port = new Serial(this, "COM3", 2000000);
+  port = new Serial(this, "/dev/ttyACM0", 9600);
   
   PFont font = createFont("arial",20);
   
@@ -40,19 +40,24 @@ void draw() {
   if (initialize){
     if (port.available()>0){
       message = port.readStringUntil('!');
+      if (message != null){
+      message = message.replace("!", "");
       if (message.equals("E"))
         E = true;
       else if (message.charAt(0) == 'w'){
         message = message.replace("w", "");
         warning = message;
       }
-      else { 
+      else if (message.charAt(0) == 'M'){
+        message = message.replace("M", "");
         String [] f = message.split("#");
         measure = f[0];
         String [] farray = f[1].split(" ");
-        for (int i=0; i<7; i++)
+        for (int i=0; i<farray.length; i++){
+          //print(farray[i]);
           flash[i] = farray[i].equals("1");
-      }
+        }
+      }}
     }
   }
   refresh();
@@ -77,8 +82,8 @@ public void refresh(){
     text("Connected!", 20, 50);
   if (E)
     text("E", 20, 75);
-  text("Warning data:", 20, 125);
-  text(warning, 20, 150);
+  text("Warning data:", 20, 200);
+  text(warning, 20, 225);
   String [] m = measure.split("\n");
   for (int i=0; i<m.length; i++){
     if (!flash[i]){
@@ -89,6 +94,6 @@ public void refresh(){
       time[i] = millis();
     }
     if (show[i])
-      text(m[i], 100, 50 + i * 25);
+      text(m[i], 350, 50 + i * 25);
   }
 }

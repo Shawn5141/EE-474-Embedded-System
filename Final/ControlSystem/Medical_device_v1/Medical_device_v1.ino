@@ -296,8 +296,8 @@ void Measure_function(void *uncast_data){
   String cast_str;
   int value[2];
   char buf[10];
-  Serial.print("hey:");
-  Serial.println(*(data->measurementSelectionPtr));
+  //Serial.print("hey:");
+  //Serial.println(*(data->measurementSelectionPtr));
   switch(*(data->measurementSelectionPtr)){
     // Temperature
     case 2:
@@ -351,13 +351,13 @@ void Measure_function(void *uncast_data){
       break;
 
    case 5:
-        Serial.print("case 5");
+        //Serial.print("case 5");
         Serial1.write("6");
         
         while ( !Serial1.available()){}
         int j;
         int l=0;
-        Serial.print("recived data");
+        //Serial.print("recived data");
         for (j=0;j<256;j++){
         serialResponse = Serial1.readStringUntil('\n');
 //        if (serialResponse="\n"){
@@ -371,12 +371,9 @@ void Measure_function(void *uncast_data){
 //          }
        
         EKGRawBuf[j]=serialResponse.toDouble();
-        Serial.println(EKGRawBuf[j]);
+        //Serial.println(EKGRawBuf[j]);
         
       }
-        Serial.println("===");
-        Serial.println(j);
-        Serial.println("===");
        
         // //Serial.write(serialResponse);
         // char buf[serialResponse.length()+1];
@@ -437,8 +434,6 @@ void Compute_function(void *uncast_data){
       FFT.Compute(data->EKGRawBufPtr, vImag, 256, FFT_FORWARD);
       FFT.ComplexToMagnitude(data->EKGRawBufPtr, vImag, 256);
       double peak = FFT.MajorPeak(data->EKGRawBufPtr, 256, 8000);
-      Serial.println("peak========");
-      Serial.println(peak);
       *(data->EKGFreqBufPtr + *(data->EKGFreqIndexPtr))= peak;
       break;
     default:
@@ -452,68 +447,68 @@ void Compute_function(void *uncast_data){
 void Communications_function(void *uncast_data){
   DataStructCommunications* data;
   data=(DataStructCommunications*)uncast_data;
-
-  Serial.write("Temperature:          ");
+  Serial.print("M");
+  Serial.print("Temperature:          ");
   Serial.print(*(data->tempCorrectedBufPtr + *(data->tempIndexPtr)));
-  Serial.write(" C\n");
-  Serial.write("Systolic pressure:    ");
+  Serial.print(" C\n");
+  Serial.print("Systolic pressure:    ");
   Serial.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr)));
-  Serial.write(" mm Hg\n");
-  Serial.write("Diastolic pressure:   ");
+  Serial.print(" mm Hg\n");
+  Serial.print("Diastolic pressure:   ");
   Serial.print(*(data->bloodPressCorrectedBufPtr + *(data->bloodPressIndexPtr) + 8));
-  Serial.write(" mm Hg\n");
-  Serial.write("Pulse rate:           ");
+  Serial.print(" mm Hg\n");
+  Serial.print("Pulse rate:           ");
   Serial.print(*(data->pulseRateCorrectedBufPtr + *(data->pulseRateIndexPtr)));
-  Serial.write(" BPM\n");
-  Serial.write("Respiration rate:     ");
+  Serial.print(" BPM\n");
+  Serial.print("Respiration rate:     ");
   Serial.print(*(data->respirationRateCorrectedBufPtr + *(data->respirationRateIndexPtr)));
-  Serial.write(" BPM\n");
-  Serial.write("EKG:                  ");
+  Serial.print(" BPM\n");
+  Serial.print("EKG:                  ");
   Serial.print(*(data->EKGFreqBufPtr + *(data->EKGFreqIndexPtr)));
-  Serial.write(" Hz\n");
-  Serial.write("Battery:              ");
+  Serial.print(" Hz\n");
+  Serial.print("Battery:              ");
   Serial.print(*(data->batteryStatePtr));
-  Serial.write("\n");
+  Serial.print("\n");
 
-  Serial.write("#");
+  Serial.print("#");
   if(tempHigh){
-    Serial.print("1");
+    Serial.print("1 ");
   }
   else{
-    Serial.print("0");
+    Serial.print("0 ");
   }
   if(bpHigh){
-    Serial.print("1");
-    Serial.print("1");
+    Serial.print("1 ");
+    Serial.print("1 ");
   }
   else{
-    Serial.print("0");
-    Serial.print("0");
+    Serial.print("0 ");
+    Serial.print("0 ");
   }
   
   if(pulseLow){
-    Serial.print("1");
+    Serial.print("1 ");
   }
   else{
-    Serial.print("0");
+    Serial.print("0 ");
   }
   if(rrLow || rrHigh){
-    Serial.print("1");
+    Serial.print("1 ");
   }
   else{
-    Serial.print("0");
+    Serial.print("0 ");
   }
   if(EKGLow || EKGHigh){
-    Serial.print("1");
+    Serial.print("1 ");
   }
   else{
-    Serial.print("0");
+    Serial.print("0 ");
   }
   if(batteryState < 40){
-    Serial.print("1");
+    Serial.print("1 ");
   }
   else{
-    Serial.print("0");
+    Serial.print("0 ");
   }
   Serial.print("!");
 
@@ -551,6 +546,11 @@ void WarnComm_function(void *uncast_data){
     Serial.write("EKG:                  ");
     Serial.print(*(data->EKGFreqBufPtr + *(data->EKGFreqIndexPtr)));
     Serial.write(" Hz\n");
+  }
+  if(*(data->batteryStatePtr) < 40){
+    Serial.print("Battery:              ");
+    Serial.print(*(data->batteryStatePtr));
+    Serial.print("\n");
   }
   Serial.write("!");
   *(data->addFlagPtr) = false;
@@ -1131,7 +1131,7 @@ void TFTKeypad_function(void *uncast_data){
           
         }else if(p.x>H+4*Measure_Select_height && p.x<5*Measure_Select_height+H){
           *(data->measurementSelectionPtr)=5;
-          Serial.println("select meausre 5");
+          //Serial.println("select meausre 5");
           
           
         }else if(p.x<H){
@@ -1167,12 +1167,12 @@ void WarningAlarm_function(void *uncast_data){
   }
   //Serial.println( *(data->alarmAcknowledgePtr));
   //Serial.print("blood pressure :");
-  Serial.println(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr)));
+  //Serial.println(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr)));
   
   if (*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))<120*0.95 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130*1.05 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8)<70*0.95 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr) + 8)>80*1.05){
       bpOutOfRange=1;
       bpHigh=true;
-      Serial.println("out of range of bp");
+      //Serial.println("out of range of bp");
 //      *(data->addComFlagPtr) = true;
       
       if(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130*1.2){
@@ -1306,7 +1306,7 @@ void RemoteComm_function(void *uncast_data){
         *data->alarmAcknowledgePtr = 1;
     }
     else if( serialResponse == "W" ){
-        taskAddFlag[9] = true; // add communication task to queue;
+        taskAddFlag[8] = true; // add communication task to queue;
     }
     else if( serialResponse == "M" ){
         taskAddFlag[7] = true; // add communication task to queue
@@ -1498,42 +1498,42 @@ void setup() {
   digitalWrite(taskqueFinishPin, LOW);
 
   //Initialized serial port 0 & 1
-  Serial.begin(2000000);
+  Serial.begin(9600);
   Serial1.begin(2000000);
   Serial.setTimeout(10);
   Serial1.setTimeout(10);
 
   //Initialized for TFT
-  Serial.println(F("TFT LCD test"));
+  //Serial.println(F("TFT LCD test"));
   tft.reset();
   
   uint16_t identifier = tft.readID();
   if(identifier == 0x9325) {
-    Serial.println(F("Found ILI9325 LCD driver"));
+    //Serial.println(F("Found ILI9325 LCD driver"));
   } else if(identifier == 0x9328) {
-    Serial.println(F("Found ILI9328 LCD driver"));
+    //Serial.println(F("Found ILI9328 LCD driver"));
   } else if(identifier == 0x4535) {
-    Serial.println(F("Found LGDP4535 LCD driver"));
+    //Serial.println(F("Found LGDP4535 LCD driver"));
   }else if(identifier == 0x7575) {
-    Serial.println(F("Found HX8347G LCD driver"));
+    //Serial.println(F("Found HX8347G LCD driver"));
   } else if(identifier == 0x9341) {
-    Serial.println(F("Found ILI9341 LCD driver"));
+    //Serial.println(F("Found ILI9341 LCD driver"));
   } else if(identifier == 0x8357) {
-    Serial.println(F("Found HX8357D LCD driver"));
+    //Serial.println(F("Found HX8357D LCD driver"));
   } else if(identifier==0x0101)
   {     
       identifier=0x9341;
-       Serial.println(F("Found 0x9341 LCD driver"));
+       //Serial.println(F("Found 0x9341 LCD driver"));
   }else {
     
-    Serial.print(F("Unknown LCD driver chip: "));
-    Serial.println(identifier, HEX);
-    Serial.println(F("If using the Elegoo 2.8\" TFT Arduino shield, the line:"));
-    Serial.println(F("  #define USE_Elegoo_SHIELD_PINOUT"));
-    Serial.println(F("should appear in the library header (Elegoo_TFT.h)."));
-    Serial.println(F("If using the breakout board, it should NOT be #defined!"));
-    Serial.println(F("Also if using the breakout, double-check that all wiring"));
-    Serial.println(F("matches the tutorial."));
+    //Serial.print(F("Unknown LCD driver chip: "));
+    //Serial.println(identifier, HEX);
+    //Serial.println(F("If using the Elegoo 2.8\" TFT Arduino shield, the line:"));
+    //Serial.println(F("  #define USE_Elegoo_SHIELD_PINOUT"));
+    //Serial.println(F("should appear in the library header (Elegoo_TFT.h)."));
+    //Serial.println(F("If using the breakout board, it should NOT be #defined!"));
+    //Serial.println(F("Also if using the breakout, double-check that all wiring"));
+    //Serial.println(F("matches the tutorial."));
     identifier=0x9341;
    
   }
@@ -1569,7 +1569,7 @@ void loop() {
   // Set add flags of WarnComm task when WarnComm is available,
   // disable WarnComm and start timer
   if (mAvailable[6]){
-    taskAddFlag[8] = true;
+    taskAddFlag[7] = true;
     mAvailable[6] = false;
     mStart_time[6] = millis();
   }
