@@ -122,6 +122,7 @@ bool bpHigh=false, tempHigh=false, pulseLow=false, rrLow=false, rrHigh=false, EK
 
 //TFT Keypad
 unsigned short functionSelect=0, measurementSelection=0, alarmAcknowledge=4,AnnSelection=0;
+unsigned short alarmAcknowledge_T=4, alarmAcknowledge_P=4, alarmAcknowledge_R=4; // 20190610 add
 unsigned short initial_val_menu=0, initial_val_Ann=0,initial_blackScreenFlag_val=0;
 unsigned long end_time_bp =0,start_time_bp=0;
 unsigned long end_time_tp =0,start_time_tp=0;
@@ -1171,7 +1172,13 @@ void WarningAlarm_function(void *uncast_data){
   if(*(data->temperatureRawBufPtr + *(data->tempIndexPtr))<36.1*0.95 || *(data->temperatureRawBufPtr + *(data->tempIndexPtr))>37.8*1.05){
     tempOutOfRange=1;
       tempHigh=true;
+      if(*(data->temperatureRawBufPtr + *(data->tempIndexPtr))<36.1*0.85 || *(data->temperatureRawBufPtr + *(data->tempIndexPtr))>37.8*1.15){
+        if( taskInQue[5]==true){
+            (alarmAcknowledge_T)+=1; 
+        }
+      
     }else{
+      alarmAcknowledge_T = 0;
       tempHigh=false;
       tempOutOfRange=0;
     
@@ -1211,12 +1218,23 @@ void WarningAlarm_function(void *uncast_data){
     rrOutOfRange=1;
      if (*(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))<12*0.95){
          rrLow=true;
+         if (*(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))<12*0.85){
+             if( taskInQue[5]==true){
+                (alarmAcknowledge_R)+=1; 
+            }
+         }
      }
      
      if ( *(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))>25*1.05){
          rrHigh=true;
+         if (*(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))>25*1.05){
+             if( taskInQue[5]==true){
+                (alarmAcknowledge_R)+=1; 
+            }
+         }
      }
     }else{
+      (alarmAcknowledge_R) = 0;
       rrLow=false;
       rrHigh=true;
       rrOutOfRange=0;
@@ -1227,6 +1245,11 @@ void WarningAlarm_function(void *uncast_data){
   if (*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))<60*0.95 || *(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))>100*1.05){
       pulseOutOfRange=1;
       pulseLow=true;
+      if (*(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))<60*0.85 || *(data->pulseRateRawBufPtr + *(data->pulseRateIndexPtr))>100*1.15){
+             if( taskInQue[5]==true){
+                (alarmAcknowledge_P)+=1; 
+            }
+     }
     }else{
       pulseLow=false;
       pulseOutOfRange=0;
