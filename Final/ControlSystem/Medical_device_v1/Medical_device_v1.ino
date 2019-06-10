@@ -122,7 +122,7 @@ bool bpHigh=false, tempHigh=false, pulseLow=false, rrLow=false, rrHigh=false, EK
 
 //TFT Keypad
 unsigned short functionSelect=0, measurementSelection=0, alarmAcknowledge=4,AnnSelection=0;
-unsigned short initial_val_menu=0, initial_val_Ann=0;
+unsigned short initial_val_menu=0, initial_val_Ann=0,initial_blackScreenFlag_val=0;
 unsigned long end_time_bp =0,start_time_bp=0;
 unsigned long end_time_tp =0,start_time_tp=0;
 unsigned long end_time_pr =0,start_time_pr=0;
@@ -688,7 +688,7 @@ void text_for_display(DataStructDisplay* data){
    //tft.setTextSize(1);
    //tft.println("        ");
    tft.setTextSize(2);
-   tft.print(" Systolic :    ");
+   tft.print(" Systolic :   ");
    //Serial.print("out of range value");
    //Serial.println(bpOutOfRange);
    if (bpOutOfRange==1 && *(data->alarmAcknowledgePtr)>5){
@@ -733,7 +733,7 @@ void text_for_display(DataStructDisplay* data){
        tft.setTextSize(1);
        tft.println("        ");
        tft.setTextSize(2);
-       tft.print(" Diastolic :   ");
+       tft.print(" Diastolic :  ");
        if (bpOutOfRange==1){
           start_time_bp=millis();
           if (end_time_bp!=0){
@@ -887,13 +887,24 @@ void Display_function(void *uncast_data){
   DataStructDisplay* data;
   data=(DataStructDisplay*)uncast_data;
   if (blackScreenFlag>0){
+      if (initial_blackScreenFlag_val>0){
+        tft.fillRect(0, 320-W, H, W, GREEN);
+        tft.drawRect(0, 320-W, H, W, WHITE);
+        tft.fillRect( 0,320-2*W, H, W, GREEN);
+        tft.drawRect(0,320-2*W, H, W, WHITE); 
+        tft.fillRect(0,320-3*W, H, W, GREEN);
+        tft.drawRect(0, 320-3*W, H, W, WHITE);
+        tft.fillRect(0,320-4*W, H, W, GREEN);
+        tft.drawRect(0, 320-4*W, H, W, WHITE);
+        }
       if (*(data->alarmAcknowledgePtr)<5){
           bar_text();
+          
       }else{
          bar_text1();
-
+         
         }
-
+      initial_blackScreenFlag_val=0;
 
       if (*(data->functionSelectPtr)==0 )  {
         //Ann Select diagram first time enter
@@ -909,7 +920,7 @@ void Display_function(void *uncast_data){
         }else{
         //Ann Select diagram second time enter
 
-
+            
             if (*(data->alarmAcknowledgePtr)>5 && *(data->AnnSelectionPtr)==1){
                 //Serial.print("greater than 5 and ret==================");
                 *(data->alarmAcknowledgePtr)=0;
@@ -1026,7 +1037,7 @@ void Display_function(void *uncast_data){
       }
   }else{
     tft.fillRect(0,0, tft.width(),tft.height(), BLACK);
-  
+    initial_blackScreenFlag_val+=1;
   }
 
 }
@@ -1174,9 +1185,11 @@ void WarningAlarm_function(void *uncast_data){
       bpHigh=true;
       //Serial.println("out of range of bp");
 //      *(data->addComFlagPtr) = true;
-      
-      if(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130*1.2){
+     
+      if(*(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))>130*1.2 || *(data->bloodPressRawBufPtr + *(data->bloodPressIndexPtr))<120*0.8){
+       
         if( taskInQue[5]==true){
+        
         (*(data->alarmAcknowledgePtr))+=1; 
         }
         
@@ -1195,7 +1208,7 @@ void WarningAlarm_function(void *uncast_data){
 
   if (*(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))<12*0.95 || *(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))>25*1.05){
       
-	  rrOutOfRange=1;
+    rrOutOfRange=1;
      if (*(data->respirationRateRawBufPtr + *(data->respirationRateIndexPtr))<12*0.95){
          rrLow=true;
      }
